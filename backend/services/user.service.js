@@ -1,6 +1,6 @@
 // Role: To handle the interactions with third party services (e.g: MongoDB atlas)
 
-import User from "../models/user.model";
+import User from "../models/user.model.js";
 
 export const createUser = async ({email, password}) => {
 
