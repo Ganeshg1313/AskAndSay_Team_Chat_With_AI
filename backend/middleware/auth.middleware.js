@@ -1,4 +1,7 @@
+//Role: To authenticate user
+
 import jwt from 'jsonwebtoken';
+import redisClient from '../services/redis.service.js';
 
 
 export const authUser = async (req, res, next) => {
@@ -10,6 +13,16 @@ export const authUser = async (req, res, next) => {
         // Checking If Token Exists
         if(!token){
             return res.status(401).send({ error: 'Unauthorized User' });
+        }
+
+        // Find if the token is present in redis
+        const isBlackListed = await redisClient.get(token);
+
+        // If True: user has logged out
+        if(isBlackListed){
+            // By setting the cookie’s value to an empty string (''), the token becomes invalid for further use.
+            res.cookie('token', '');    
+            return res.status(401).send({ error: 'Unauthorized User'});
         }
 
         // Verifying the Token

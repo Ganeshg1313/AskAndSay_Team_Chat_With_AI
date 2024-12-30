@@ -3,6 +3,7 @@
 import userModel from '../models/user.model.js';
 import * as userService from '../services/user.service.js';
 import {validationResult} from 'express-validator'; // Used to validate and sanitize user input in an application.
+import redisClient from '../services/redis.service.js';
 
 export const createUserController = async (req, res) => {
 
@@ -73,4 +74,23 @@ export const profileController = async (req, res) => {
     res.status(200).json({
         user: req.user
     })
+}
+
+export const logoutController = async (req, res) => {
+    try {
+
+        // Extract the token
+        const token = req.cookies.token || req.headers.authorization.split(' ')[ 1 ];
+
+        // Stores the token in redis with value set to logout
+        // Sets an expiration time for the key to avoid indefinite storage
+        redisClient.set(token, 'logout', 'EX' ,60*60*24);
+
+        res.status(200).json({
+            message: 'Logged out successfully'
+        });
+        
+    } catch (error) {
+        res.status(400).send(error.message);
+    }
 }
