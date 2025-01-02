@@ -21,6 +21,8 @@ export const createUserController = async (req, res) => {
         // Generating JWT token by calling the instance method 
         const token = await user.generateJWT();
 
+        delete user._doc.password;
+
         // returning the user and jwt token
         res.status(201).send({user, token});
     }
@@ -59,6 +61,8 @@ export const loginController = async (req, res) => {
         }
 
         const token = await user.generateJWT();
+
+        delete user._doc.password;
 
         res.status(200).json({user, token});
      }
