@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: true,
+    unique: [true, 'Email has been used before'],
     trim: true,
     lowercase: true,
     minLength: [6, "Email must be at least 6 characters long"], //Set length constraints and custom error messages.

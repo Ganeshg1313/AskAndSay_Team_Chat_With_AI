@@ -1,3 +1,5 @@
+//Role: routes which receives a request call coming from app.js and passes it to middleware/controller
+
 import {Router} from 'express';
 import *  as userController from '../controllers/user.controller.js';
 import * as authMiddleWare from '../middleware/auth.middleware.js';
