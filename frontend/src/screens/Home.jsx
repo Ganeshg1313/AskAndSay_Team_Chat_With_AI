@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {UserContext} from '../context/user.context'; 
 import axios from '../config/axios.js';
 
@@ -8,6 +8,7 @@ const Home = () => {
 
   const [isModalOpan, setIsModelOpen] = useState(false);
   const [projectName, setProjectName] = useState(null);
+  const [projects, setProjects] = useState([]);
 
   function createProject(e){
     e.preventDefault();
@@ -25,9 +26,18 @@ const Home = () => {
     })
   }
 
+  useEffect(()=>{
+    axios.get('/projects/all').then((res) => {
+      setProjects(res.data.projects);
+    })
+    .catch((error) => {
+      console.log(error);
+    })
+  },[]);
+
   return (
     <main className='p-4'>
-      <div className="projects">
+      <div className="projects flex flex-wrap gap-3">
         <button 
         className="project p-4 border border-slate-300 rounded-md"
         onClick={() => setIsModelOpen(true)}
@@ -35,6 +45,22 @@ const Home = () => {
           New Project
           <i className="ri-link ml-2"></i>
         </button>
+
+        {
+          projects.map((project) => (
+            <div key={project._id} className='project min-w-36 flex flex-col gap-2 p-4 border rounded-md border-slate-300 cursor-pointer hover:bg-slate-200'>
+              <h2
+              className='font-semibold'
+              >{project.name}</h2>
+
+              <div className='flex gap-2'>
+                <i className="ri-user-line"></i>
+                <p className='text-sm'>Collaboraters: </p>
+                <p className='text-sm font-bold'>{project.users.length}</p>
+              </div>
+            </div>
+          ))
+        }
       </div>
 
       {isModalOpan && (
