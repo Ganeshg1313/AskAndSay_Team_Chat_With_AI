@@ -46,9 +46,10 @@ export const getAllProject = async (req, res) => {
 };
 
 export const addUserToProject = async (req, res) => {
-  const errors = validationResult(req);
+  const errors = validationResult(req.body);
 
   if (!errors.isEmpty()) {
+    console.log("hi");
     return res.status(400).json({ errors: errors.array() });
   }
 

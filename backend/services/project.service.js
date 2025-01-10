@@ -1,3 +1,4 @@
+// Role: To handle the interactions with third party services (e.g: MongoDB atlas)
 
 import projectModel from '../models/project.model.js';
 import mongoose from 'mongoose';
