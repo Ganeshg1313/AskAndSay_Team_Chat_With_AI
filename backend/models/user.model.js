@@ -8,7 +8,7 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
-    unique: [true, 'Email has been used before'],
+    unique: [true, "Email has been used before"],
     trim: true,
     lowercase: true,
     minLength: [6, "Email must be at least 6 characters long"], //Set length constraints and custom error messages.
@@ -32,11 +32,9 @@ userSchema.methods.isValidPassword = async function (password) {
 
 //Define an instance method generateJWT for the schema.
 userSchema.methods.generateJWT = async function () {
-  return jwt.sign(
-    { email: this.email }, 
-    process.env.JWT_SECRET, 
-    { expiresIn: "24h" },
-    );
+  return jwt.sign({ email: this.email }, process.env.JWT_SECRET, {
+    expiresIn: "24h",
+  });
 };
 
 //Create a model named User using the userSchema.

@@ -1,11 +1,9 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
-import 'remixicon/fonts/remixicon.css'
+import { StrictMode } from "react"; //Not used to avoid two connections with socket.io
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App.jsx";
+import "remixicon/fonts/remixicon.css";
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
+createRoot(document.getElementById("root")).render(
     <App />
-  </StrictMode>,
-)
+);

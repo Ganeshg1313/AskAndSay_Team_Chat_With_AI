@@ -1,6 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "../config/axios";
+import {
+  initializeSocket,
+  receiveMessage,
+  sendMessage,
+} from "../config/socket";
+import { UserContext } from "../context/user.context.jsx";
 
 const Project = () => {
   const location = useLocation();
@@ -10,10 +16,14 @@ const Project = () => {
   const [isAddUsersModalOpen, setAddUsersModalOpen] = useState(false);
   const [currentlyAddedUsers, setCurrentlyAddedUsers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
+  const [projectId, setProjectId] = useState(location.state.project._id);
+  const [message, setMessage] = useState("");
+
+  const { user } = useContext(UserContext);
 
   function getProjectUsers() {
     axios
-      .get(`/projects/get-project/${location.state.project._id}`)
+      .get(`/projects/get-project/${projectId}`)
       .then((res) => {
         setProjectUsers(res.data.project.users);
       })
@@ -27,21 +37,36 @@ const Project = () => {
       .get("/users/all")
       .then((res) => {
         const allFetchedUsers = res.data.users;
-  
+
         // Filter out users already in the project
         const nonProjectUsers = allFetchedUsers.filter(
-          (user) => !projectUsers.some((projectUser) => projectUser._id === user._id)
+          (user) =>
+            !projectUsers.some((projectUser) => projectUser._id === user._id)
         );
-  
+
         setAllUsers(nonProjectUsers);
       })
       .catch((error) => {
         console.log(error);
       });
   }
-  
+
+  const handleSendMessage = () => {
+    sendMessage("project-message", {
+      message,
+      sender: user._id,
+    });
+
+    setMessage("");
+  };
 
   useEffect(() => {
+    initializeSocket(projectId);
+
+    receiveMessage("project-message", (data) => {
+      console.log(data);
+    });
+
     getAllUsers();
     getProjectUsers();
   }, []);
@@ -61,7 +86,7 @@ const Project = () => {
 
     axios
       .put("/projects/add-user", {
-        projectId: location.state.project._id,
+        projectId: projectId,
         users: usersToAdd, // Assuming the API expects an array of user IDs
       })
       .then((res) => {
@@ -118,10 +143,15 @@ const Project = () => {
           <div className="inputField w-full flex ">
             <input
               type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
               placeholder="Enter message"
               className="flex-grow p-2 px-4 border-none outline-none"
             />
-            <button className="px-5 bg-slate-900 text-white">
+            <button
+              onClick={handleSendMessage}
+              className="px-5 bg-slate-900 text-white"
+            >
               <i className="ri-send-plane-fill"></i>
             </button>
           </div>
@@ -142,7 +172,7 @@ const Project = () => {
           </header>
 
           <div className="users flex flex-col gap-2">
-            {projectUsers.map((user) => (
+            {projectUsers?.map((user) => (
               <div
                 key={user._id}
                 className="user p-2 flex gap-2 item-center cursor-pointer hover:bg-slate-200"

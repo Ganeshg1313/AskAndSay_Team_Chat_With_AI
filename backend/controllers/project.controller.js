@@ -54,39 +54,34 @@ export const addUserToProject = async (req, res) => {
   }
 
   try {
-
-    const {projectId, users} = req.body;
+    const { projectId, users } = req.body;
 
     const loggedInUser = await userModel.findOne({
-      email: req.user.email
-    })
+      email: req.user.email,
+    });
 
     const project = await projectService.addUsersToProject({
       projectId,
       users,
-      userId: loggedInUser
-    })
+      userId: loggedInUser,
+    });
 
-    return res.status(200).json({project});
-
+    return res.status(200).json({ project });
   } catch (error) {
     console.log(error);
     res.status(400).json({ errors: error.message });
   }
 };
 
-
 export const getProjectById = async (req, res) => {
-    try{
-      
-        const {projectId} = req.params;
+  try {
+    const { projectId } = req.params;
 
-        const project = await projectService.getProject({projectId});
+    const project = await projectService.getProject({ projectId });
 
-        res.status(200).json({project: project});
-
-    }catch(error){
-      console.log(error);
-      res.status(400).json({error: error.message});
-    }
-}
+    res.status(200).json({ project: project });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ error: error.message });
+  }
+};

@@ -1,33 +1,34 @@
 import React, { useState, useContext } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from '../config/axios.js';
+import axios from "../config/axios.js";
 import { UserContext } from "../context/user.context.jsx";
 
 const Login = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const[email, setEmail] = useState('');
-  const[password, setPassword] = useState('');
-
-  const { setUser } = useContext(UserContext); 
+  const { setUser } = useContext(UserContext);
 
   const navigate = useNavigate();
 
-  function submitHandler(e){
-
+  function submitHandler(e) {
     e.preventDefault();
 
-    axios.post('users/register', {
-      email,
-      password
-    }).then((res) => {
-      console.log(res.data);
+    axios
+      .post("users/register", {
+        email,
+        password,
+      })
+      .then((res) => {
+        console.log(res.data);
 
-      localStorage.setItem('token', res.data.token);
-      setUser(res.data.user);
-      navigate('/');
-    }).catch((error) => {
-      console.log(error.response.data);
-    })
+        localStorage.setItem("token", res.data.token);
+        setUser(res.data.user);
+        navigate("/");
+      })
+      .catch((error) => {
+        console.log(error.response.data);
+      });
   }
 
   return (
@@ -44,7 +45,7 @@ const Login = () => {
               id="email"
               className="w-full p-3 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-200"
               placeholder="Enter your email"
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div className="mb-6">
@@ -56,7 +57,7 @@ const Login = () => {
               id="password"
               className="w-full p-3 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your password"
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
           <button
@@ -67,10 +68,10 @@ const Login = () => {
           </button>
         </form>
         <p className="text-gray-400 mt-4">
-           {"Already have an account?" + " "}
-           <Link to="/login" className="text-blue-500 hover:underline">
+          {"Already have an account?" + " "}
+          <Link to="/login" className="text-blue-500 hover:underline">
             Login
-           </Link>
+          </Link>
         </p>
       </div>
     </div>

@@ -33,6 +33,10 @@ router.get(
 
 router.get("/logout", authMiddleWare.authUser, userController.logoutController);
 
-router.get("/all", authMiddleWare.authUser, userController.getAllUsersController);
+router.get(
+  "/all",
+  authMiddleWare.authUser,
+  userController.getAllUsersController
+);
 
 export default router;
