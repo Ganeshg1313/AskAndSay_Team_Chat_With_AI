@@ -66,7 +66,6 @@ io.on("connection", (socket) => {
   socket.join(socket.roomId);
 
   socket.on("project-message", (data) => {
-    console.log(data);
     // to send the message to all sockets in the same roomId, except the sender
     socket.broadcast.to(socket.roomId).emit("project-message", data);
   });

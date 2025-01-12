@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useEffect, useState, useContext, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "../config/axios";
 import {
@@ -18,6 +18,7 @@ const Project = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [projectId, setProjectId] = useState(location.state.project._id);
   const [message, setMessage] = useState("");
+  const messageBoxRef = useRef(null);
 
   const { user } = useContext(UserContext);
 
@@ -54,9 +55,9 @@ const Project = () => {
   const handleSendMessage = () => {
     sendMessage("project-message", {
       message,
-      sender: user._id,
+      sender: user,
     });
-
+    appendOutgoingMessage(message, user);
     setMessage("");
   };
 
@@ -65,11 +66,18 @@ const Project = () => {
 
     receiveMessage("project-message", (data) => {
       console.log(data);
+      appendIncomingMessage(data);
     });
 
     getAllUsers();
     getProjectUsers();
   }, []);
+
+  useEffect(() => {
+    if (messageBoxRef.current) {
+      messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+    }
+  }, [projectUsers]);
 
   function handleCurrentlyAddedUsers(user) {
     if (currentlyAddedUsers.includes(user)) {
@@ -81,21 +89,17 @@ const Project = () => {
   }
 
   function handleAddUsers() {
-    // Prepare data in the format expected by the API
     const usersToAdd = currentlyAddedUsers.map((user) => user._id);
 
     axios
       .put("/projects/add-user", {
         projectId: projectId,
-        users: usersToAdd, // Assuming the API expects an array of user IDs
+        users: usersToAdd,
       })
       .then((res) => {
         console.log(res);
-        // Refresh the project users list after adding users
         getProjectUsers();
-        // Clear the currently added users array
         setCurrentlyAddedUsers([]);
-        // Close the modal
         setAddUsersModalOpen(false);
       })
       .catch((error) => {
@@ -104,10 +108,59 @@ const Project = () => {
   }
 
   function handleCloseModal() {
-    // Clear the currently added users array
     setCurrentlyAddedUsers([]);
-    // Close the modal
     setAddUsersModalOpen(false);
+  }
+
+  function appendIncomingMessage(messageObject) {
+    const messageBox = document.querySelector(".message-box");
+
+    const message = document.createElement("div");
+    message.classList.add(
+      "message",
+      "max-w-56",
+      "flex",
+      "flex-col",
+      "p-2",
+      "bg-slate-50",
+      "w-fit",
+      "rounded-md"
+    );
+    message.innerHTML = `
+            <small className=\"opacity-65 text-xs\">${messageObject.sender.email}</small>
+            <p className=\"text-sm\">${messageObject.message}</p>
+    `;
+
+    messageBox.appendChild(message);
+    if (messageBoxRef.current) {
+      messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+    }
+  }
+
+  function appendOutgoingMessage(userMessage) {
+    const messageBox = document.querySelector(".message-box");
+
+    const message = document.createElement("div");
+    message.classList.add(
+      "message",
+      "max-w-56",
+      "ml-auto",
+      "flex",
+      "flex-col",
+      "p-2",
+      "bg-slate-50",
+      "w-fit",
+      "rounded-md"
+    );
+    message.innerHTML = `
+            <small className=\"opacity-65 text-xs\">You</small>
+            <p className=\"text-sm\">${userMessage}</p>
+    `;
+
+    messageBox.appendChild(message);
+    if (messageBoxRef.current) {
+      messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+    }
   }
 
   return (
@@ -129,18 +182,21 @@ const Project = () => {
           </button>
         </header>
 
-        <div className="conversation-area flex-grow flex flex-col">
-          <div className="message-box p-2 flex-grow flex flex-col gap-2">
+        <div className="conversation-area flex flex-col h-full overflow-hidden">
+          <div
+            ref={messageBoxRef}
+            className="message-box p-2 flex-grow flex flex-col gap-2 overflow-y-auto"
+          >
             <div className="incoming message max-w-56 flex flex-col p-2 bg-slate-50 w-fit rounded-md">
               <small className="opacity-65 text-xs">example@gmail.com</small>
               <p className="text-sm">Lorem ipsum dolor sit amet.</p>
             </div>
             <div className="outgoing message max-w-56 ml-auto flex flex-col p-2 bg-slate-50 w-fit rounded-md">
-              <small className="opacity-65 text-xs">example@gmail.com</small>
+              <small className="opacity-65 text-xs">You</small>
               <p className="text-sm">Lorem ipsum dolor sit amet.</p>
             </div>
           </div>
-          <div className="inputField w-full flex ">
+          <div className="inputField w-full flex">
             <input
               type="text"
               value={message}
