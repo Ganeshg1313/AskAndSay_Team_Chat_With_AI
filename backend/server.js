@@ -10,6 +10,7 @@ import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import projectModel from "./models/project.model.js";
+import { generateResult } from "./services/ai.service.js";
 
 // Establishing database connection
 connect();
@@ -65,16 +66,33 @@ io.on("connection", (socket) => {
   // makes the socket join a "room" identified by roomId
   socket.join(socket.roomId);
 
-  socket.on("project-message", (data) => {
+  socket.on("project-message", async (data) => {
+    const message = data.message;
+    
+    const isAIPrompt = message.includes("@ai");
+
+    if(isAIPrompt){
+
+      const prompt = message.replace("@ai", "");
+
+      const result = await generateResult(prompt);
+
+      io.to(socket.roomId).emit("project-message", {
+        sender:{
+          _id: 'ai',
+          email: 'AI'
+        },
+        message: result
+      });
+      return;
+    }
     // to send the message to all sockets in the same roomId, except the sender
     socket.broadcast.to(socket.roomId).emit("project-message", data);
   });
 
-  socket.on("event", (data) => {
-    /* … */
-  });
   socket.on("disconnect", () => {
-    /* … */
+    console.log("User disconnected");
+    socket.leave(socket.roomId);
   });
 });
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext, useRef } from "react";
+import Markdown from "markdown-to-jsx";
 import { useLocation } from "react-router-dom";
 import axios from "../config/axios";
 import {
@@ -7,6 +8,8 @@ import {
   sendMessage,
 } from "../config/socket";
 import { UserContext } from "../context/user.context.jsx";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { dracula } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 const Project = () => {
   const location = useLocation();
@@ -19,6 +22,8 @@ const Project = () => {
   const [projectId, setProjectId] = useState(location.state.project._id);
   const [message, setMessage] = useState("");
   const messageBoxRef = useRef(null);
+
+  const [messages, setMessages] = useState([]);
 
   const { user } = useContext(UserContext);
 
@@ -57,16 +62,19 @@ const Project = () => {
       message,
       sender: user,
     });
-    appendOutgoingMessage(message, user);
+    // appendOutgoingMessage(message);
+    setMessages((prevMessages) => [...prevMessages, { sender: user, message }]);
     setMessage("");
   };
 
   useEffect(() => {
+    console.log(user);
     initializeSocket(projectId);
 
     receiveMessage("project-message", (data) => {
-      console.log(data);
-      appendIncomingMessage(data);
+      // console.log(data);
+      // appendIncomingMessage(data);
+      setMessages((prevMessages) => [...prevMessages, data]);
     });
 
     getAllUsers();
@@ -77,7 +85,7 @@ const Project = () => {
     if (messageBoxRef.current) {
       messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
     }
-  }, [projectUsers]);
+  }, [messages]);
 
   function handleCurrentlyAddedUsers(user) {
     if (currentlyAddedUsers.includes(user)) {
@@ -107,61 +115,89 @@ const Project = () => {
       });
   }
 
+  const MarkdownOptions = {
+    overrides: {
+      code: {
+        component: ({ className, children }) => {
+          const language = className?.replace("lang-", "") || "javascript";
+          return (
+            <SyntaxHighlighter language={language} style={dracula}>
+              {children}
+            </SyntaxHighlighter>
+          );
+        },
+      },
+    },
+  };
+
   function handleCloseModal() {
     setCurrentlyAddedUsers([]);
     setAddUsersModalOpen(false);
   }
 
-  function appendIncomingMessage(messageObject) {
-    const messageBox = document.querySelector(".message-box");
+  // function appendIncomingMessage(messageObject) {
+  //   const messageBox = document.querySelector(".message-box");
 
-    const message = document.createElement("div");
-    message.classList.add(
-      "message",
-      "max-w-56",
-      "flex",
-      "flex-col",
-      "p-2",
-      "bg-slate-50",
-      "w-fit",
-      "rounded-md"
-    );
-    message.innerHTML = `
-            <small className=\"opacity-65 text-xs\">${messageObject.sender.email}</small>
-            <p className=\"text-sm\">${messageObject.message}</p>
-    `;
+  //   const message = document.createElement("div");
+  //   message.classList.add(
+  //     "message",
+  //     "max-w-56",
+  //     "flex",
+  //     "flex-col",
+  //     "p-2",
+  //     "bg-slate-50",
+  //     "w-fit",
+  //     "rounded-md"
+  //   );
+  //   if (messageObject.sender._id === "ai") {
 
-    messageBox.appendChild(message);
-    if (messageBoxRef.current) {
-      messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
-    }
-  }
+  //     const markDown = (<Markdown>{messageObject.message}</Markdown>)
 
-  function appendOutgoingMessage(userMessage) {
-    const messageBox = document.querySelector(".message-box");
+  //     message.innerHTML = `
+  //     <small className=\"opacity-65 text-xs\">${messageObject.sender.email}</small>
+  //     <p className=\"text-sm\">${markDown}</p>
+  //     `
 
-    const message = document.createElement("div");
-    message.classList.add(
-      "message",
-      "max-w-56",
-      "ml-auto",
-      "flex",
-      "flex-col",
-      "p-2",
-      "bg-slate-50",
-      "w-fit",
-      "rounded-md"
-    );
-    message.innerHTML = `
-            <small className=\"opacity-65 text-xs\">You</small>
-            <p className=\"text-sm\">${userMessage}</p>
-    `;
+  //   } else {
 
-    messageBox.appendChild(message);
-    if (messageBoxRef.current) {
-      messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
-    }
-  }
+  //     message.innerHTML = `
+  //     <small className=\"opacity-65 text-xs\">${messageObject.sender.email}</small>
+  //     <p className=\"text-sm\">${messageObject.message}</p>
+  //     `;
+
+  //   }
+
+  //   messageBox.appendChild(message);
+  //   if (messageBoxRef.current) {
+  //     messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+  //   }
+  // }
+
+  // function appendOutgoingMessage(userMessage) {
+  //   const messageBox = document.querySelector(".message-box");
+
+  //   const message = document.createElement("div");
+  //   message.classList.add(
+  //     "message",
+  //     "max-w-56",
+  //     "ml-auto",
+  //     "flex",
+  //     "flex-col",
+  //     "p-2",
+  //     "bg-slate-50",
+  //     "w-fit",
+  //     "rounded-md"
+  //   );
+  //   message.innerHTML = `
+  //           <small className=\"opacity-65 text-xs\">You</small>
+  //           <p className=\"text-sm\">${userMessage}</p>
+  //   `;
+
+  //   messageBox.appendChild(message);
+  //   if (messageBoxRef.current) {
+  //     messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
+  //   }
+  // }
 
   return (
     <main className="h-screen w-screen flex relative">
@@ -187,14 +223,40 @@ const Project = () => {
             ref={messageBoxRef}
             className="message-box p-2 flex-grow flex flex-col gap-2 overflow-y-auto"
           >
-            <div className="incoming message max-w-56 flex flex-col p-2 bg-slate-50 w-fit rounded-md">
+            {messages.map((message, index) => (
+              <div
+                key={index}
+                className={`message max-w-80 flex flex-col p-2 bg-slate-50 w-fit rounded-md ${
+                  message.sender._id === user._id ? "ml-auto" : ""
+                } ${
+                  message.sender._id === "ai" ? "bg-slate-800 text-white" : ""
+                }`}
+              >
+                <small className="opacity-65 text-xs">
+                  {message.sender.email}
+                </small>
+                {message.sender._id === "ai" ? (
+                  <Markdown
+                    options={MarkdownOptions}
+                    className="break-words whitespace-pre-wrap"
+                  >
+                    {message.message}
+                  </Markdown>
+                ) : (
+                  <p className="break-words whitespace-pre-wrap text-sm">
+                    {message.message}
+                  </p>
+                )}
+              </div>
+            ))}
+            {/* <div className="incoming message max-w-56 flex flex-col p-2 bg-slate-50 w-fit rounded-md">
               <small className="opacity-65 text-xs">example@gmail.com</small>
               <p className="text-sm">Lorem ipsum dolor sit amet.</p>
             </div>
             <div className="outgoing message max-w-56 ml-auto flex flex-col p-2 bg-slate-50 w-fit rounded-md">
               <small className="opacity-65 text-xs">You</small>
               <p className="text-sm">Lorem ipsum dolor sit amet.</p>
-            </div>
+            </div> */}
           </div>
           <div className="inputField w-full flex">
             <input
