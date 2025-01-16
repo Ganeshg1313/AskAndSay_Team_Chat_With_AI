@@ -10,6 +10,17 @@ import {
 import { UserContext } from "../context/user.context.jsx";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { dracula } from "react-syntax-highlighter/dist/esm/styles/prism";
+import CodeMirror from '@uiw/react-codemirror';
+import { javascript } from '@codemirror/lang-javascript';
+import { vscodeDark } from '@uiw/codemirror-theme-vscode';
+
+function SyntaxHighlightedCode(props) {
+  return (
+    <SyntaxHighlighter language="javascript" style={dracula}>
+      {props.children}
+    </SyntaxHighlighter>
+  );
+}
 
 const Project = () => {
   const location = useLocation();
@@ -24,8 +35,14 @@ const Project = () => {
   const messageBoxRef = useRef(null);
 
   const [messages, setMessages] = useState([]);
+  const [fileTree, setFileTree] = useState({});
+
+  const [currentFile, setCurrentFile] = useState(null);
+  const [openFiles, setOpenFiles] = useState([]);
 
   const { user } = useContext(UserContext);
+
+  
 
   function getProjectUsers() {
     axios
@@ -43,13 +60,10 @@ const Project = () => {
       .get("/users/all")
       .then((res) => {
         const allFetchedUsers = res.data.users;
-
-        // Filter out users already in the project
         const nonProjectUsers = allFetchedUsers.filter(
           (user) =>
             !projectUsers.some((projectUser) => projectUser._id === user._id)
         );
-
         setAllUsers(nonProjectUsers);
       })
       .catch((error) => {
@@ -62,18 +76,56 @@ const Project = () => {
       message,
       sender: user,
     });
-    // appendOutgoingMessage(message);
     setMessages((prevMessages) => [...prevMessages, { sender: user, message }]);
     setMessage("");
   };
 
+  function writeAIMessage(message) {
+    try {
+      console.log(message);
+      const parsedMessageObject = JSON.parse(message);
+      console.log(parsedMessageObject);
+  
+      // Extract the text response
+      let response = parsedMessageObject?.text || "No response text provided.";
+  
+      // If buildCommand exists, append it to the response
+      if (parsedMessageObject.buildCommand) {
+        response += `\nBuild Command: ${parsedMessageObject.buildCommand.mainItem} ${parsedMessageObject.buildCommand.commands.join(" ")}\n`;
+      }
+  
+      // If startCommand exists, append it to the response
+      if (parsedMessageObject.startCommand) {
+        response += `\nStart Command: ${parsedMessageObject.startCommand.mainItem} ${parsedMessageObject.startCommand.commands.join(" ")}\n`;
+      }
+  
+      return (
+        <Markdown
+          options={MarkdownOptions}
+          className="break-words whitespace-pre-wrap"
+        >
+          {response}
+        </Markdown>
+      );
+    } catch (error) {
+      console.error("Error parsing AI response:", error);
+      return (
+        <div className="text-red-500">
+          Error rendering AI response. Please check the console for details.
+        </div>
+      );
+    }
+  }
+  
+
   useEffect(() => {
-    console.log(user);
     initializeSocket(projectId);
 
     receiveMessage("project-message", (data) => {
-      // console.log(data);
-      // appendIncomingMessage(data);
+      const message = JSON.parse(data.message);
+      if (message.fileTree) {
+        setFileTree(message.fileTree);
+      }
       setMessages((prevMessages) => [...prevMessages, data]);
     });
 
@@ -105,7 +157,6 @@ const Project = () => {
         users: usersToAdd,
       })
       .then((res) => {
-        console.log(res);
         getProjectUsers();
         setCurrentlyAddedUsers([]);
         setAddUsersModalOpen(false);
@@ -118,14 +169,7 @@ const Project = () => {
   const MarkdownOptions = {
     overrides: {
       code: {
-        component: ({ className, children }) => {
-          const language = className?.replace("lang-", "") || "javascript";
-          return (
-            <SyntaxHighlighter language={language} style={dracula}>
-              {children}
-            </SyntaxHighlighter>
-          );
-        },
+        component: SyntaxHighlightedCode,
       },
     },
   };
@@ -135,69 +179,22 @@ const Project = () => {
     setAddUsersModalOpen(false);
   }
 
-  // function appendIncomingMessage(messageObject) {
-  //   const messageBox = document.querySelector(".message-box");
+  const handleCodeChange = (value, viewUpdate) => {
+    const updatedTree = {
+      ...fileTree,
+      [currentFile]: {
+        file: {
+          contents: value,
+        },
+      },
+    };
+    setFileTree(updatedTree);
+  };
 
-  //   const message = document.createElement("div");
-  //   message.classList.add(
-  //     "message",
-  //     "max-w-56",
-  //     "flex",
-  //     "flex-col",
-  //     "p-2",
-  //     "bg-slate-50",
-  //     "w-fit",
-  //     "rounded-md"
-  //   );
-  //   if (messageObject.sender._id === "ai") {
-
-  //     const markDown = (<Markdown>{messageObject.message}</Markdown>)
-
-  //     message.innerHTML = `
-  //     <small className=\"opacity-65 text-xs\">${messageObject.sender.email}</small>
-  //     <p className=\"text-sm\">${markDown}</p>
-  //     `
-
-  //   } else {
-
-  //     message.innerHTML = `
-  //     <small className=\"opacity-65 text-xs\">${messageObject.sender.email}</small>
-  //     <p className=\"text-sm\">${messageObject.message}</p>
-  //     `;
-
-  //   }
-
-  //   messageBox.appendChild(message);
-  //   if (messageBoxRef.current) {
-  //     messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
-  //   }
-  // }
-
-  // function appendOutgoingMessage(userMessage) {
-  //   const messageBox = document.querySelector(".message-box");
-
-  //   const message = document.createElement("div");
-  //   message.classList.add(
-  //     "message",
-  //     "max-w-56",
-  //     "ml-auto",
-  //     "flex",
-  //     "flex-col",
-  //     "p-2",
-  //     "bg-slate-50",
-  //     "w-fit",
-  //     "rounded-md"
-  //   );
-  //   message.innerHTML = `
-  //           <small className=\"opacity-65 text-xs\">You</small>
-  //           <p className=\"text-sm\">${userMessage}</p>
-  //   `;
-
-  //   messageBox.appendChild(message);
-  //   if (messageBoxRef.current) {
-  //     messageBoxRef.current.scrollTop = messageBoxRef.current.scrollHeight;
-  //   }
-  // }
+  useEffect(()=>{
+    console.log("current: ", currentFile);
+    console.log("open: ", openFiles);
+  },[openFiles, currentFile])
 
   return (
     <main className="h-screen w-screen flex relative">
@@ -236,12 +233,7 @@ const Project = () => {
                   {message.sender.email}
                 </small>
                 {message.sender._id === "ai" ? (
-                  <Markdown
-                    options={MarkdownOptions}
-                    className="break-words whitespace-pre-wrap"
-                  >
-                    {message.message}
-                  </Markdown>
+                  writeAIMessage(message.message)
                 ) : (
                   <p className="break-words whitespace-pre-wrap text-sm">
                     {message.message}
@@ -249,14 +241,6 @@ const Project = () => {
                 )}
               </div>
             ))}
-            {/* <div className="incoming message max-w-56 flex flex-col p-2 bg-slate-50 w-fit rounded-md">
-              <small className="opacity-65 text-xs">example@gmail.com</small>
-              <p className="text-sm">Lorem ipsum dolor sit amet.</p>
-            </div>
-            <div className="outgoing message max-w-56 ml-auto flex flex-col p-2 bg-slate-50 w-fit rounded-md">
-              <small className="opacity-65 text-xs">You</small>
-              <p className="text-sm">Lorem ipsum dolor sit amet.</p>
-            </div> */}
           </div>
           <div className="inputField w-full flex">
             <input
@@ -305,6 +289,76 @@ const Project = () => {
             ))}
           </div>
         </div>
+      </section>
+      <section className="right bg-red-300 flex flex-grow">
+        <div className="explorer h-full max-w-60 min-w-40 bg-slate-100">
+          <header className="p-2 px-4 bg-slate-600 text-white">
+            <h1 className="font-semibold">Explorer</h1>
+          </header>
+          <div className="fileTree flex flex-col">
+            {Object.keys(fileTree).map((file) => (
+              <button
+                key={file}
+                onClick={() => {
+                  setCurrentFile(file);
+                  setOpenFiles([...new Set([...openFiles, file])]);
+                }}
+                className={`file p-2 bg-slate-200 cursor-pointer ${currentFile == file? "bg-slate-400": "hover:bg-slate-300"}`}
+              >
+
+                <h1 className="font-semibold">{file}</h1>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {openFiles.length > 0 && (
+          <div className="codeEditor flex flex-col flex-grow h-full shrink">
+            <div className="top flex w-full">
+              {openFiles.map((file) => (
+                <div
+                  key={file}
+                  onClick={() => setCurrentFile(file)}
+                  className={`codeEditorHeader bg-slate-100 flex items-center p-1 px-2 cursor-pointer hover:bg-slate-300 ${
+                    currentFile === file ? 'bg-slate-400' : ''
+                  }`}
+                >
+                  <h1 className="font-semibold">{file}</h1>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (openFiles.length === 1) {
+                        setCurrentFile(null);
+                        setOpenFiles([]);
+                        return;
+                      }
+                      if(setOpenFiles(openFiles.filter((f) => f !== file))){
+                        setCurrentFile(openFiles[0]);
+                      }
+                      
+                    }}
+                    className="p-2"
+                  >
+                    <i className="ri-close-fill"></i>
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="main flex flex-grow max-w-full shrink overflow-auto bg-[#1e1e1e]">
+              {currentFile && fileTree[currentFile] && (
+                <CodeMirror
+                  value={fileTree[currentFile].file.contents}
+                  height="100%"
+                  width="100%"
+                  theme={vscodeDark}
+                  extensions={[javascript()]}
+                  onChange={handleCodeChange}
+                  className="h-full w-full"
+                />
+              )}
+            </div>
+          </div>
+        )}
       </section>
       {isAddUsersModalOpen && (
         <div className="w-1/2 max-h-20 absolute flex items-center rounded-lg justify-center top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-2 shadow-lg">

@@ -1,0 +1,69 @@
+@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap");
+
+.theme {
+    background-color: #282a36; /* Dracula background */
+    color: #f8f8f2; /* Dracula foreground text */
+    font-family: "Fira Code", "Courier New", monospace; /* Programmer-friendly fonts */
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 10px;
+    border: 1px solid #44475a; /* Subtle border for better contrast */
+    border-radius: 5px; /* Slightly rounded corners for a modern look */
+    outline: none;
+    resize: none;
+    width: 100%;
+    height: 100%;
+    caret-color: #ff79c6; /* Dracula pink for caret */
+    overflow: auto;
+    white-space: pre;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3); /* Slight shadow for depth */
+  }
+  
+  .theme::selection {
+    background: #44475a; /* Selection background */
+    color: #f8f8f2; /* Selection text color remains readable */
+  }
+  
+  .theme::-webkit-scrollbar {
+    width: 8px; /* Narrow scrollbar for aesthetics */
+  }
+  
+  .theme::-webkit-scrollbar-thumb {
+    background: #6272a4; /* Scrollbar thumb in Dracula purple */
+    border-radius: 4px;
+  }
+  
+  .theme::-webkit-scrollbar-thumb:hover {
+    background: #ff79c6; /* Hover effect for scrollbar thumb */
+  }
+  
+  .theme::-webkit-scrollbar-track {
+    background: #282a36; /* Scrollbar track matches background */
+  }
+  
+  .theme:focus {
+    border-color: #6272a4; /* Focus border matches Dracula purple */
+    box-shadow: 0 0 6px #6272a4; /* Subtle glow effect on focus */
+  }
+  
+  .theme .keyword {
+    color: #ff79c6; /* Keywords in Dracula pink */
+  }
+  
+  .theme .string {
+    color: #f1fa8c; /* Strings in Dracula yellow */
+  }
+  
+  .theme .function {
+    color: #50fa7b; /* Functions in Dracula green */
+  }
+  
+  .theme .comment {
+    color: #6272a4; /* Comments in Dracula purple */
+    font-style: italic; /* Italicized for distinction */
+  }
+  
+  .theme .number {
+    color: #bd93f9; /* Numbers in Dracula purple */
+  }
+  
