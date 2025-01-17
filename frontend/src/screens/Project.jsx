@@ -82,9 +82,7 @@ const Project = () => {
 
   function writeAIMessage(message) {
     try {
-      console.log(message);
       const parsedMessageObject = JSON.parse(message);
-      console.log(parsedMessageObject);
   
       // Extract the text response
       let response = parsedMessageObject?.text || "No response text provided.";
@@ -122,9 +120,11 @@ const Project = () => {
     initializeSocket(projectId);
 
     receiveMessage("project-message", (data) => {
-      const message = JSON.parse(data.message);
-      if (message.fileTree) {
-        setFileTree(message.fileTree);
+      if (data.sender._id === "ai") {
+        const message = JSON.parse(data.message);
+        if (message.fileTree) {
+          setFileTree(message.fileTree);
+        }
       }
       setMessages((prevMessages) => [...prevMessages, data]);
     });
