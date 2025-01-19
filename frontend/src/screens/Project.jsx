@@ -13,13 +13,25 @@ import { dracula } from "react-syntax-highlighter/dist/esm/styles/prism";
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { vscodeDark } from '@uiw/codemirror-theme-vscode';
+import { getWebContainer } from "../config/webContainer.js";
 
-function SyntaxHighlightedCode(props) {
+// Separate component for code blocks
+function CodeBlock({ className, children }) {
+  const language = className ? className.replace('lang-', '') : 'javascript';
   return (
-    <SyntaxHighlighter language="javascript" style={dracula}>
-      {props.children}
+    <SyntaxHighlighter language={language} style={dracula}>
+      {children}
     </SyntaxHighlighter>
   );
+}
+
+// Separate component for paragraphs containing code
+function CustomParagraph({ children, ...props }) {
+  // If the paragraph contains only a CodeBlock, render just the CodeBlock
+  if (React.Children.count(children) === 1 && React.isValidElement(children) && children.type === CodeBlock) {
+    return children;
+  }
+  return <p {...props}>{children}</p>;
 }
 
 const Project = () => {
@@ -39,6 +51,8 @@ const Project = () => {
 
   const [currentFile, setCurrentFile] = useState(null);
   const [openFiles, setOpenFiles] = useState([]);
+
+  const [webContainer, setWebContainer] = useState(null);
 
   const { user } = useContext(UserContext);
 
@@ -84,22 +98,24 @@ const Project = () => {
     try {
       const parsedMessageObject = JSON.parse(message);
   
-      // Extract the text response
       let response = parsedMessageObject?.text || "No response text provided.";
   
-      // If buildCommand exists, append it to the response
       if (parsedMessageObject.buildCommand) {
         response += `\nBuild Command: ${parsedMessageObject.buildCommand.mainItem} ${parsedMessageObject.buildCommand.commands.join(" ")}\n`;
       }
   
-      // If startCommand exists, append it to the response
       if (parsedMessageObject.startCommand) {
         response += `\nStart Command: ${parsedMessageObject.startCommand.mainItem} ${parsedMessageObject.startCommand.commands.join(" ")}\n`;
       }
   
       return (
         <Markdown
-          options={MarkdownOptions}
+          options={{
+            overrides: {
+              code: CodeBlock,
+              p: CustomParagraph
+            },
+          }}
           className="break-words whitespace-pre-wrap"
         >
           {response}
@@ -119,9 +135,18 @@ const Project = () => {
   useEffect(() => {
     initializeSocket(projectId);
 
+    if(!webContainer){
+      getWebContainer()
+        .then((container) => {
+        setWebContainer(container);
+        console.log("Container started")
+        })
+    }
+
     receiveMessage("project-message", (data) => {
       if (data.sender._id === "ai") {
         const message = JSON.parse(data.message);
+        webContainer?.mount(message.fileTree);
         if (message.fileTree) {
           setFileTree(message.fileTree);
         }
@@ -166,13 +191,6 @@ const Project = () => {
       });
   }
 
-  const MarkdownOptions = {
-    overrides: {
-      code: {
-        component: SyntaxHighlightedCode,
-      },
-    },
-  };
 
   function handleCloseModal() {
     setCurrentlyAddedUsers([]);
@@ -190,6 +208,44 @@ const Project = () => {
     };
     setFileTree(updatedTree);
   };
+
+  const handleContainer = async () => {
+    try {
+      // Mount the file tree in the container
+      console.log("Mounting file tree in WebContainer...");
+      await webContainer.mount(fileTree);
+      
+      // Verify files in the container
+      console.log("Verifying files in WebContainer...");
+      const verifyProcess = await webContainer.spawn('ls');
+      verifyProcess.output.pipeTo(new WritableStream({
+        write(chunk) {
+          console.log(chunk);
+        }
+      }));
+  
+      // Run npm install
+      console.log("Running npm install...");
+      const installProcess = await webContainer.spawn("npm", ["install"]);
+      installProcess.output.pipeTo(new WritableStream({
+        write(chunk) {
+          console.log(chunk);
+        }
+      }));
+  
+      // Run npm start
+      console.log("Running npm start...");
+      const runProcess = await webContainer.spawn("npm", ["start"]);
+      runProcess.output.pipeTo(new WritableStream({
+        write(chunk) {
+          console.log(chunk);
+        }
+      }));
+    } catch (error) {
+      console.error("Error during container operations:", error.message);
+    }
+  };
+  
 
   useEffect(()=>{
     console.log("current: ", currentFile);
@@ -290,8 +346,14 @@ const Project = () => {
           </div>
         </div>
       </section>
-      <section className="right bg-red-300 flex flex-grow">
+      <section className="right flex flex-grow">
         <div className="explorer h-full max-w-60 min-w-40 bg-slate-100">
+        <button
+            onClick={handleContainer}
+            className="w-full bg-slate-900 text-white p-2 font-semibold"
+            >
+              Run
+            </button>
           <header className="p-2 px-4 bg-slate-600 text-white">
             <h1 className="font-semibold">Explorer</h1>
           </header>

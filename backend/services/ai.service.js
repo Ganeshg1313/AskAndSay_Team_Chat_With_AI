@@ -68,6 +68,11 @@ CRITICAL FORMATTING RULES:
    - Use consistent indentation (2 spaces)
    - Include necessary comments in the code
    - Follow proper coding conventions for the specific language
+6. Whenever a user tells to return a modular code structure, you have to divide the code in the files only because i am not handling nested folders on the frontend so only files should be returned directly not the nested folders
+
+ALWAYS REMEMBER:
+- Never use file name like rountes/index.js even if user tells you to write modular code you can't use file name format like "folderName/fileName.ext" , always use flat file name like fileName.ext if you want to separate the files then you can use different name for e.g : userRoutes.js, productRoutes.js etc
+- Always include package.json file
 
 Example responses:
 
