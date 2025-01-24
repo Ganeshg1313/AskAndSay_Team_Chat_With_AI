@@ -44,6 +44,8 @@ const Project = () => {
   const [isSidePanelOpen, setSidePanelOpen] = useState(false);
   const [projectUsers, setProjectUsers] = useState([]);
   const [isAddUsersModalOpen, setAddUsersModalOpen] = useState(false);
+  const [isRemoveUsersModalOpen, setRemoveUsersModalOpen] = useState(false);
+  const [isHandleUsersModalOpen, setHandleUsersModalOpen] = useState(false);
   const [currentlyAddedUsers, setCurrentlyAddedUsers] = useState([]);
   const [allUsers, setAllUsers] = useState([]);
   const [projectId, setProjectId] = useState(location.state.project._id);
@@ -58,7 +60,6 @@ const Project = () => {
 
   const [webContainer, setWebContainer] = useState(null);
   const [runningProcess, setRunningProcess] = useState(null);
-  const [dependenciesInstalled, setDependenciesInstalled] = useState(false);
   const [containerState, setContainerState] = useState(null);
 
   const [iFrameUrl, setIFrameUrl] = useState(null);
@@ -266,10 +267,28 @@ const Project = () => {
         console.error("Error adding users:", error);
       });
   }
+  function handleRemoveUser() {
+    const usersToRemove = currentlyAddedUsers.map((user) => user._id);
+
+    axios
+      .put("/projects/remove-user", {
+        projectId: projectId,
+        users: usersToRemove,
+      })
+      .then((res) => {
+        getProjectUsers();
+        getAllUsers();
+        setCurrentlyAddedUsers([]);
+        setAddUsersModalOpen(false);
+      })
+      .catch((error) => {
+        console.error("Error adding users:", error);
+      });
+  }
 
   function handleCloseModal() {
     setCurrentlyAddedUsers([]);
-    setAddUsersModalOpen(false);
+    setHandleUsersModalOpen(false);
   }
 
   const handleCodeChange = (value, viewUpdate) => {
@@ -314,48 +333,42 @@ const Project = () => {
         await installProcess.exit;
         setLogs((prevLogs) => [...prevLogs, "npm install complete"]);
 
-        
         // setRunningProcess(runProcess);
 
         setContainerState("running");
-      }
-      else if(containerState === "running") {
-        
-        console.log("Running....")
+      } else if (containerState === "running") {
+        console.log("Running....");
 
-       //Run npm start
-       console.log("Running npm start...");
-       setLogs((prevLogs) => [...prevLogs, "running npm start"]);
-       const runProcess = await webContainer.spawn("npm", ["start"]);
-       runProcess.output.pipeTo(
-         new WritableStream({
-           write(chunk) {
-             console.log(chunk);
-           },
-         })
-       );
-       setLogs((prevLogs) => [...prevLogs, "npm start complete"]);
+        //Run npm start
+        console.log("Running npm start...");
+        setLogs((prevLogs) => [...prevLogs, "running npm start"]);
+        const runProcess = await webContainer.spawn("npm", ["start"]);
+        runProcess.output.pipeTo(
+          new WritableStream({
+            write(chunk) {
+              console.log(chunk);
+            },
+          })
+        );
+        setLogs((prevLogs) => [...prevLogs, "npm start complete"]);
 
-        webContainer.on('server-ready', (port, url) => {
+        webContainer.on("server-ready", (port, url) => {
           console.log("Server started at: ", url);
-          console.log(port, url)
-          setIFrameUrl(url)
+          console.log(port, url);
+          setIFrameUrl(url);
           setLogs((prevLogs) => [...prevLogs, "Server started at: " + url]);
-      })
-      }
-      else if(containerState === "stopped") {
-        if(runningProcess){
+        });
+      } else if (containerState === "stopped") {
+        if (runningProcess) {
           runningProcess.kill();
           setRunningProcess(null);
         }
       }
-      
     } catch (error) {
       console.error("Error: ", error.message);
       setLogs((prevLogs) => [...prevLogs, error.message]);
     }
   };
-
 
   useEffect(() => {
     console.log("current: ", currentFile);
@@ -367,12 +380,12 @@ const Project = () => {
       <section className="left relative flex flex-col h-full min-w-96 bg-slate-300">
         <header className="flex justify-between items-center p-2 px-4 w-full bg-slate-100">
           <button
-            onClick={() => setAddUsersModalOpen(!isAddUsersModalOpen)}
+            onClick={() => setHandleUsersModalOpen(!isHandleUsersModalOpen)}
             className="flex gap-2"
           >
-            <i className="ri-user-add-fill"></i>
-            Add Collaborater
+            <i class="ri-settings-3-fill"></i>
           </button>
+          <h1 className="font-semibold text-lg">{user.email}</h1>
           <button
             onClick={() => setSidePanelOpen(!isSidePanelOpen)}
             className="p-2"
@@ -485,131 +498,175 @@ const Project = () => {
           </div>
         </div>
         {/* openFiles.length > 0 && */}
-          <div className="codeAndPreview flex flex-grow flex-col">
-            <div className="selectScreen flex">
-              <button
+        <div className="codeAndPreview flex flex-grow flex-col">
+          <div className="selectScreen flex">
+            <button
               className="w-max bg-slate-600 text-white p-2 m-1 font-semibold border-r-2 border-slate-300 rounded-3xl"
-              onClick={() => setScreen("code")} 
-              >
-                <h2>Code</h2>
-              </button>
-              <button
+              onClick={() => setScreen("code")}
+            >
+              <h2>Code</h2>
+            </button>
+            <button
               className="w-max bg-slate-600 text-white p-2 m-1 font-semibold border-r-2 border-slate-300 rounded-3xl"
               onClick={() => setScreen("preview")}
-              >
-                <h2>Preview</h2>
-              </button>
-            </div>
-            {
-              screen === "code" ? (
-                <div className="codeEditor flex flex-col flex-grow h-full shrink">
-            <div className="top flex w-full">
-              {openFiles.map((file) => (
-                <div
-                  key={file}
-                  onClick={() => setCurrentFile(file)}
-                  className={`codeEditorHeader bg-slate-100 flex items-center p-1 px-2 cursor-pointer hover:bg-slate-300 ${
-                    currentFile === file ? "bg-slate-400" : ""
-                  }`}
-                >
-                  <h1 className="font-semibold">{file}</h1>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (openFiles.length === 1) {
-                        setCurrentFile(null);
-                        setOpenFiles([]);
-                        return;
-                      }
-                      if (setOpenFiles(openFiles.filter((f) => f !== file))) {
-                        setCurrentFile(openFiles[0]);
-                      }
-                    }}
-                    className="p-2"
+            >
+              <h2>Preview</h2>
+            </button>
+          </div>
+          {screen === "code" ? (
+            <div className="codeEditor flex flex-col flex-grow h-full shrink">
+              <div className="top flex w-full">
+                {openFiles.map((file) => (
+                  <div
+                    key={file}
+                    onClick={() => setCurrentFile(file)}
+                    className={`codeEditorHeader bg-slate-100 flex items-center p-1 px-2 cursor-pointer hover:bg-slate-300 ${
+                      currentFile === file ? "bg-slate-400" : ""
+                    }`}
                   >
-                    <i className="ri-close-fill"></i>
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="main flex flex-grow max-w-full shrink overflow-auto bg-[#1e1e1e]">
-              {currentFile && fileTree[currentFile] && (
-                <CodeMirror
-                  value={fileTree[currentFile].file.contents}
-                  height="100%"
-                  width="100%"
-                  theme={vscodeDark}
-                  extensions={[javascript()]}
-                  onChange={handleCodeChange}
-                  className="h-full w-full"
-                />
-              )}
-            </div>
-            <div className="bottom w-full min-h-32 max-h-32 flex flex-col overflow-auto gap-2 p-2 bg-slate-500 border-t-2 border-slate-200">
-              {logs.map((log, index) => (
-                <li key={index} className="flex items-center gap-2 list-none">
-                  <i className="ri-arrow-right-s-line"></i>
-                  <p className="text-white">{log}</p>
-                </li>
-              ))}
-            </div>
-          </div>
-              ) : (
-                  <div className="flex flex-col h-full">
-                    <div className="address-bar">
-                      <input
-                        type="text"
-                        value={iFrameUrl}
-                        onChange={(e) => setIFrameUrl(e.target.value)}
-                        className="w-full p-2 border border-gray-300 rounded-md"
-                      />
-                    </div>
-                    <iframe
-                      src={iFrameUrl}
-                      title="Web Container"
-                      className="w-full h-full bg-slate-400"
-                    ></iframe>
+                    <h1 className="font-semibold">{file}</h1>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (openFiles.length === 1) {
+                          setCurrentFile(null);
+                          setOpenFiles([]);
+                          return;
+                        }
+                        if (setOpenFiles(openFiles.filter((f) => f !== file))) {
+                          setCurrentFile(openFiles[0]);
+                        }
+                      }}
+                      className="p-2"
+                    >
+                      <i className="ri-close-fill"></i>
+                    </button>
                   </div>
+                ))}
+              </div>
+              <div className="main flex flex-grow max-w-full shrink overflow-auto bg-[#1e1e1e]">
+                {currentFile && fileTree[currentFile] && (
+                  <CodeMirror
+                    value={fileTree[currentFile].file.contents}
+                    height="100%"
+                    width="100%"
+                    theme={vscodeDark}
+                    extensions={[javascript()]}
+                    onChange={handleCodeChange}
+                    className="h-full w-full"
+                  />
                 )}
-              
-          </div>
-          
-
-        
+              </div>
+              <div className="bottom w-full min-h-32 max-h-32 flex flex-col overflow-auto gap-2 p-2 bg-slate-500 border-t-2 border-slate-200">
+                {logs.map((log, index) => (
+                  <li key={index} className="flex items-center gap-2 list-none">
+                    <i className="ri-arrow-right-s-line"></i>
+                    <p className="text-white">{log}</p>
+                  </li>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col h-full">
+              <div className="address-bar">
+                <input
+                  type="text"
+                  value={iFrameUrl}
+                  onChange={(e) => setIFrameUrl(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
+              </div>
+              <iframe
+                src={iFrameUrl}
+                title="Web Container"
+                className="w-full h-full bg-slate-400"
+              ></iframe>
+            </div>
+          )}
+        </div>
       </section>
-      {isAddUsersModalOpen && (
+
+      {isHandleUsersModalOpen && (
         <div className="w-1/2 max-h-20 absolute flex items-center rounded-lg justify-center top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 border-2 shadow-lg">
           <div className="w-full h-full flex flex-col gap-2 bg-slate-50 rounded-lg p-4">
             <header className="w-full flex justify-between">
-              <h2 className="text-black font-semibold text-lg">Select Users</h2>
+              <h2 className="text-black font-semibold text-lg">Select</h2>
               <i
                 onClick={handleCloseModal}
                 className="ri-close-fill font-semibold cursor-pointer"
               ></i>
             </header>
-            <div className="w-full flex flex-col gap-2">
-              {allUsers.map((user) => (
-                <li
-                  key={user._id}
-                  onClick={() => handleCurrentlyAddedUsers(user)}
-                  className={`${
-                    currentlyAddedUsers.includes(user)
-                      ? "bg-green-400"
-                      : "bg-slate-200"
-                  } p-2 list-none text-lg rounded-sm cursor-pointer hover:font-semibold`}
-                >
-                  {user.email}
-                </li>
-              ))}
+            <div className="select-add-or-remove w-full flex justify-center gap-7">
+              <button
+                onClick={() => {
+                  setRemoveUsersModalOpen(false);
+                  setAddUsersModalOpen(!isAddUsersModalOpen);
+                  setCurrentlyAddedUsers([]);
+                }}
+                className={`${isAddUsersModalOpen ? "bg-slate-600" : "bg-slate-400" } text-white text-lg font-semibold p-2 rounded-sm hover:bg-slate-700`}
+              >
+                Add Users
+              </button>
+              <button
+                onClick={() => {
+                  setAddUsersModalOpen(false);
+                  setRemoveUsersModalOpen(!isRemoveUsersModalOpen);
+                  setCurrentlyAddedUsers([]);
+                }}
+                  className={`${isRemoveUsersModalOpen ? "bg-slate-600" : "bg-slate-400" } text-white text-lg font-semibold p-2 rounded-sm hover:bg-slate-700`}
+              >
+                Remove Users
+              </button>
             </div>
-            <button
-              onClick={handleAddUsers}
-              className="bg-blue-600 text-white text-lg font-semibold p-2 rounded-sm hover:bg-blue-800"
-            >
-              Add Users
-            </button>
+              {isAddUsersModalOpen && (
+                <div className="w-full flex flex-col gap-2">
+                  {allUsers.map((user) => (
+                    <li
+                      key={user._id}
+                      onClick={() => handleCurrentlyAddedUsers(user)}
+                      className={`${
+                        currentlyAddedUsers.includes(user)
+                          ? "bg-green-400"
+                          : "bg-slate-200"
+                      } p-2 list-none text-lg rounded-sm cursor-pointer hover:font-semibold`}
+                    >
+                      {user.email}
+                    </li>
+                  ))}
+                  <button
+                    onClick={handleAddUsers}
+                    className="bg-blue-600 text-white text-lg font-semibold p-2 rounded-sm hover:bg-blue-800"
+                  >
+                    Add Users
+                  </button>
+                </div>
+              )}
+              {isRemoveUsersModalOpen && (
+                <div className="w-full flex flex-col gap-2">
+                  {projectUsers.map((user) => (
+                    <li
+                      key={user._id}
+                      onClick={() => handleCurrentlyAddedUsers(user)}
+                      className={`${
+                        currentlyAddedUsers.includes(user)
+                          ? "bg-green-400"
+                          : "bg-slate-200"
+                      } p-2 list-none text-lg rounded-sm cursor-pointer hover:font-semibold`}
+                    >
+                      {user.email}
+                    </li>
+                  ))}
+                  <button
+                    onClick={handleRemoveUser}
+                    className="bg-blue-600 text-white text-lg font-semibold p-2 rounded-sm hover:bg-blue-800"
+                  >
+                    Remove Users
+                  </button>
+                </div>
+              )}
+              
+            </div>
           </div>
-        </div>
       )}
     </main>
   );

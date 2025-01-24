@@ -9,36 +9,56 @@ const Home = () => {
   const [projectName, setProjectName] = useState("");
   const [projects, setProjects] = useState([]);
 
+  function getAllProjects(){
+    axios
+    .get("/projects/all")
+    .then((res) => {
+      setProjects(res.data.projects);
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+  }
+
   function createProject(e) {
     e.preventDefault();
-    console.log({ projectName });
-
+  
     axios
       .post("/projects/create", {
         name: projectName,
       })
       .then((res) => {
-        console.log(res);
+        getAllProjects();
         setIsModelOpen(false);
       })
       .catch((error) => {
         console.log(error);
       });
+
   }
 
+  function handleDeleteProject(event, id){
+
+    event.stopPropagation();
+  
+    axios.put("/projects/delete-project",{
+      projectId: id,
+    })
+    .then((res) => {
+      getAllProjects();
+    })
+    .catch((error) => {
+      console.log(error);
+    })
+  }
+  
   useEffect(() => {
-    axios
-      .get("/projects/all")
-      .then((res) => {
-        setProjects(res.data.projects);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }, [projects]);
+    getAllProjects();
+  }, []); // Ensure this only runs once
+  
 
   return (
-    <main className="w-full h-full bg-slate-900">
+    <main className="w-full h-screen min-h-min bg-slate-900">
       <div className="header flex py-2 px-6 justify-between items-center">
         <div className="company-info flex items-center max-h-max p-2">
           <img src="/logo.png" alt="logo" className="w-11" />
@@ -60,10 +80,7 @@ const Home = () => {
          </button>
         </div>
       </div>
-      <div className="top w-full flex items-center justify-center p-4">
-        
-      </div>
-      <div className="projects flex flex-col items-center flex-wrap gap-3">
+      <div className="projects flex flex-col items-center flex-wrap gap-3 pb-6">
       <div className="create-project w-1/2">
           <button
             className="project p-4 bg-orange-600 text-white font-semibold rounded-md hover:shadow-sm hover:shadow-zinc-200"
@@ -90,6 +107,12 @@ const Home = () => {
               <p className="text-md font-semibold">Collaboraters: </p>
               <p className="text-sm font-bold">{project.users.length}</p>
             </div>
+
+            <button
+            onClick={(e) => handleDeleteProject(e, project._id)}
+            >
+            <i className="ri-delete-bin-6-fill"></i>
+            </button>
           </div>
         ))}
       </div>
@@ -115,7 +138,9 @@ const Home = () => {
                 <button
                   type="button"
                   className="mr-2 px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400"
-                  onClick={() => setIsModelOpen(false)}
+                  onClick={() => {
+                    setIsModelOpen(false)
+                  }}
                 >
                   Cancel
                 </button>

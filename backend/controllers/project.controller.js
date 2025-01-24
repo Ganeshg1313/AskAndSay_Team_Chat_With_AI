@@ -4,7 +4,7 @@ import * as projectService from "../services/project.service.js";
 import { validationResult } from "express-validator";
 import userModel from "../models/user.model.js";
 
-export const createProject = async (req, res) => {
+export const createProjectController = async (req, res) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
@@ -26,7 +26,7 @@ export const createProject = async (req, res) => {
   }
 };
 
-export const getAllProject = async (req, res) => {
+export const getAllProjectController = async (req, res) => {
   try {
     const loggedInUser = await userModel.findOne({
       email: req.user.email,
@@ -45,11 +45,10 @@ export const getAllProject = async (req, res) => {
   }
 };
 
-export const addUserToProject = async (req, res) => {
+export const addUsersToProjectController = async (req, res) => {
   const errors = validationResult(req.body);
 
   if (!errors.isEmpty()) {
-    console.log("hi");
     return res.status(400).json({ errors: errors.array() });
   }
 
@@ -72,7 +71,28 @@ export const addUserToProject = async (req, res) => {
   }
 };
 
-export const getProjectById = async (req, res) => {
+export const removeUsersFromProjectController = async (req, res) => {
+  try {
+    const { projectId, users } = req.body;
+
+    const loggedInUser = await userModel.findOne({
+      email: req.user.email,
+    });
+
+    const project = await projectService.removeUsersFromProject({
+      projectId,
+      users,
+      userId: loggedInUser,
+    });
+
+    return res.status(200).json({ project });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ errors: error.message });
+  }
+};
+
+export const getProjectByIdController = async (req, res) => {
   try {
     const { projectId } = req.params;
 
@@ -86,15 +106,26 @@ export const getProjectById = async (req, res) => {
 };
 
 
-export const deleteFileById = async (req, res) => { 
+export const deleteFileByIdController = async (req, res) => { 
   try {
     const { projectId } = req.body;
-
-    const res = await projectService.deleteFiles({ projectId });
+    
+    const result = await projectService.deleteFiles({ projectId });
 
     res.status(200).json({ message: "File deleted successfully" });
   } catch (error) {
-    console.log(error);
+    res.status(400).json({ error: error.message });
+  }
+}
+
+export const deleteProjectController = async (req, res) => {
+  try{
+    const { projectId } = req.body;
+    
+    const result = await projectService.deleteProject({ projectId });
+    console.log("Porject : ", result);
+    res.status(200).json({ message: "Project deleted successfully" });
+  }catch(error){
     res.status(400).json({ error: error.message });
   }
 }
