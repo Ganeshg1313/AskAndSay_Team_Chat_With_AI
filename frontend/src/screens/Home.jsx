@@ -38,16 +38,41 @@ const Home = () => {
   }, [projects]);
 
   return (
-    <main className="p-4">
-      <div className="projects flex flex-wrap gap-3">
-        <button
-          className="project p-4 border border-slate-300 rounded-md"
-          onClick={() => setIsModelOpen(true)}
-        >
-          New Project
-          <i className="ri-link ml-2"></i>
-        </button>
-
+    <main className="w-full h-full bg-slate-900">
+      <div className="header flex py-2 px-6 justify-between items-center">
+        <div className="company-info flex items-center max-h-max p-2">
+          <img src="/logo.png" alt="logo" className="w-11" />
+        </div>
+        <div className="tab">
+          <a href="/about" className="text-white font-semibold hover:underline">
+            About
+          </a>
+        </div>
+        <div className="logout">
+         <button
+            className="text-white bg-purple-600 p-2 px-4 rounded-md font-bold hover:bg-purple-800"
+            onClick={() => {
+              localStorage.removeItem("token");
+              navigate("/login");
+            }
+            }>
+            Logout
+         </button>
+        </div>
+      </div>
+      <div className="top w-full flex items-center justify-center p-4">
+        
+      </div>
+      <div className="projects flex flex-col items-center flex-wrap gap-3">
+      <div className="create-project w-1/2">
+          <button
+            className="project p-4 bg-orange-600 text-white font-semibold rounded-md hover:shadow-sm hover:shadow-zinc-200"
+            onClick={() => setIsModelOpen(true)}
+          >
+            New Project
+            <i className="ri-link ml-2"></i>
+          </button>
+        </div>
         {projects.map((project) => (
           <div
             key={project._id}
@@ -56,13 +81,13 @@ const Home = () => {
                 state: { project },
               })
             }
-            className="project min-w-36 flex flex-col gap-2 p-4 border rounded-md border-slate-300 cursor-pointer hover:bg-slate-200"
+            className="project w-1/2 bg-slate-200 flex justify-between p-4 px-6 mx-4 border rounded-md border-slate-300 cursor-pointer hover:bg-purple-400"
           >
-            <h2 className="font-semibold">{project.name}</h2>
+            <h2 className="font-semibold text-lg">{project.name}</h2>
 
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
               <i className="ri-user-line"></i>
-              <p className="text-sm">Collaboraters: </p>
+              <p className="text-md font-semibold">Collaboraters: </p>
               <p className="text-sm font-bold">{project.users.length}</p>
             </div>
           </div>
@@ -71,7 +96,7 @@ const Home = () => {
 
       {isModalOpan && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white p-6 rounded-md shadow-md w-1/3">
+          <div className="bg-slate-50 p-6 rounded-md shadow-md w-1/3">
             <h2 className="text-xl mb-4">Create New Project</h2>
             <form onSubmit={createProject}>
               <div className="mb-4">
@@ -89,14 +114,14 @@ const Home = () => {
               <div className="flex justify-end">
                 <button
                   type="button"
-                  className="mr-2 px-4 py-2 bg-gray-300 rounded-md"
+                  className="mr-2 px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400"
                   onClick={() => setIsModelOpen(false)}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md"
+                  className="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-900"
                 >
                   Create
                 </button>

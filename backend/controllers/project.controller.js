@@ -84,3 +84,17 @@ export const getProjectById = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+
+
+export const deleteFileById = async (req, res) => { 
+  try {
+    const { projectId } = req.body;
+
+    const res = await projectService.deleteFiles({ projectId });
+
+    res.status(200).json({ message: "File deleted successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(400).json({ error: error.message });
+  }
+}
