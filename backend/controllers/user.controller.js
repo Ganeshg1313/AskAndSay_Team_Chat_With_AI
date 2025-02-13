@@ -20,10 +20,11 @@ export const createUserController = async (req, res) => {
     // Generating JWT token by calling the instance method
     const token = await user.generateJWT();
 
-    delete user._doc.password;
+    const userObject = user.toObject();
+    delete userObject.password;
 
     // returning the user and jwt token
-    res.status(201).send({ user, token });
+    res.status(201).send({ user: userObject, token });
   } catch (error) {
     res.status(400).send(error.message);
   }
@@ -43,24 +44,21 @@ export const loginController = async (req, res) => {
     // As we have set password = false by default, so while querying we need to explicitly select the password too.
 
     if (!user) {
-      return res.status(401).json({
-        errors: "Invalid Credentials",
-      });
+      return res.status(401).json({ error: "Invalid email or password" });
     }
 
     const isMatch = await user.isValidPassword(password);
 
     if (!isMatch) {
-      return res.status(401).json({
-        errors: "Invalid Credentials",
-      });
+      return res.status(401).json({ error: "Invalid email or password" });
     }
 
     const token = await user.generateJWT();
 
-    delete user._doc.password;
+    const userObject = user.toObject();
+    delete userObject.password;
 
-    res.status(200).json({ user, token });
+    res.status(200).json({ user: userObject, token });
   } catch (error) {
     res.status(400).send(error.message);
   }
@@ -68,15 +66,25 @@ export const loginController = async (req, res) => {
 
 // This should only work for authenticated user (logged in user)
 export const profileController = async (req, res) => {
-  res.status(200).json({
-    user: req.user,
-  });
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    res.status(200).json({ user: req.user });
+  } catch (error) {
+    res.status(500).json({ error: "Something went wrong" });
+  }
 };
 
 export const logoutController = async (req, res) => {
   try {
     // Extract the token
-    const token = req.cookies.token || req.headers.authorization.split(" ")[1];
+    const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+      return res.status(400).json({ error: "No token provided" });
+    }
 
     // Stores the token in redis with value set to logout
     // Sets an expiration time for the key to avoid indefinite storage

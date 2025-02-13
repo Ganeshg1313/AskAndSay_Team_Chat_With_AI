@@ -1,4 +1,4 @@
-// Role: creating an axios instance to be used across project with predefined baseURL and header fecthing token from the local storage
+// Role: creating an axios instance to be used across project 
 
 import axios from "axios";
 

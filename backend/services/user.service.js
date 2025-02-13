@@ -19,8 +19,12 @@ export const createUser = async ({ email, password }) => {
 };
 
 export const getAllUsers = async ({ userId }) => {
-  const users = await User.find({
-    _id: { $ne: userId },
-  });
-  return users;
+  try {
+    const users = await User.find({
+      _id: { $ne: userId },
+    });
+    return users;
+  } catch (error) {
+    throw new Error("Error fetching all users");
+  }
 };

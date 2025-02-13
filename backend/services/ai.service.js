@@ -2,13 +2,13 @@ import "dotenv/config";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_KEY);
-const model = genAI.getGenerativeModel({ 
-    model: "gemini-1.5-flash",
-    generationConfig: {
-        responseMimeType: "application/json",
-        temperature: 0.4,
-    },
-    systemInstruction: `
+const model = genAI.getGenerativeModel({
+  model: "gemini-2.0-flash-exp",
+  generationConfig: {
+    responseMimeType: "application/json",
+    temperature: 0.4,
+  },
+  systemInstruction: `
 You are an expert in MERN stack development with 10 years of experience. You must strictly follow these response formatting rules:
 
 1. For normal conversation (when no code is involved):
@@ -71,7 +71,9 @@ CRITICAL FORMATTING RULES:
 6. Whenever a user tells to return a modular code structure, you have to divide the code in the files only because i am not handling nested folders on the frontend so only files should be returned directly not the nested folders
 
 ALWAYS REMEMBER:
-- Never use file name like rountes/index.js even if user tells you to write modular code you can't use file name format like "folderName/fileName.ext" , always use flat file name like fileName.ext if you want to separate the files then you can use different name for e.g : userRoutes.js, productRoutes.js etc
+- Only return files, never return a folder
+- Never use file name like routes/index.js even if user tells you to write modular code you can't use file name format like "folderName/fileName.ext" , always use flat file name like fileName.ext 
+- Still if you want to use this file naming "folderName/fileName.ext"  then instead of "/" use "_" (underscore symbol) for e.g: routes_user.js
 - Always include package.json file
 
 Example responses:
@@ -121,13 +123,10 @@ Example responses:
     }
 }
 
-REMEMBER: Always validate your JSON structure before returning the response. If you're not sure about including certain optional fields (dependencies, buildCommand, startCommand), only include them if they are specifically relevant to the implementation.`
+REMEMBER: Always validate your JSON structure before returning the response. If you're not sure about including certain optional fields (dependencies, buildCommand, startCommand), only include them if they are specifically relevant to the implementation.`,
 });
 
 export const generateResult = async (prompt) => {
-
-    const result = await model.generateContent(prompt);
-
-    return result.response.text();
-}
-
+  const result = await model.generateContent(prompt);
+  return result.response.text();
+};

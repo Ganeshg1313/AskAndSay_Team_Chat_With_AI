@@ -34,22 +34,21 @@ io.use(async (socket, next) => {
     const projectId = socket.handshake.query?.projectId;
 
     if (!mongoose.Types.ObjectId.isValid(projectId)) {
-      return next(new Error("Inavlid projectId"));
+      return next(new Error("Invalid projectId"));
     }
 
     socket.project = await projectModel.findById(projectId);
 
     if (!token) {
-      return next(new Error("Authenticaiton error"));
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    if (!decoded) {
       return next(new Error("Authentication error"));
     }
 
-    socket.user = decoded;
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.user = decoded;
+    } catch (err) {
+      return next(new Error("Invalid or expired token"));
+    }
 
     next();
   } catch (error) {
@@ -58,32 +57,42 @@ io.use(async (socket, next) => {
 });
 
 io.on("connection", (socket) => {
+  if (!socket.project) {
+    return socket.disconnect();
+  }
+
   // Attaching a roomId to socket to identify each project uniquely and only send messages to the users of a particular project
   socket.roomId = socket.project._id.toString();
 
-  console.log("A user connected");
+  console.log(`User connected: ${socket.user?.email || "Unknown"}`);
 
   // makes the socket join a "room" identified by roomId
   socket.join(socket.roomId);
 
   socket.on("project-message", async (data) => {
     const message = data.message;
-    
-    const isAIPrompt = message.includes("@ai");
 
-    if(isAIPrompt){
+    const isAIPrompt = /@ai\b/.test(message);
 
-      const prompt = message.replace("@ai", "");
+    console.log(isAIPrompt)
 
-      const result = await generateResult(prompt);
+    if (isAIPrompt) {
+      const prompt = message.replace(/@ai\b/g, "").trim();
+      console.log(prompt)
+      try {
+        const result = await generateResult(prompt);
+        console.log(result);
+        io.to(socket.roomId).emit("project-message", {
+          sender: { _id: "ai", email: "AI" },
+          message: result,
+        });
+      } catch (error) {
+        io.to(socket.roomId).emit("project-message", {
+          sender: { _id: "ai", email: "AI" },
+          message: "AI failed to process your request. Try again later.",
+        });
+      }
 
-      io.to(socket.roomId).emit("project-message", {
-        sender:{
-          _id: 'ai',
-          email: 'AI'
-        },
-        message: result
-      });
       return;
     }
     // to send the message to all sockets in the same roomId, except the sender
@@ -91,7 +100,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log("User disconnected");
+    console.log(`User disconnected: ${socket.user?.email || "Unknown"}`);
     socket.leave(socket.roomId);
   });
 });

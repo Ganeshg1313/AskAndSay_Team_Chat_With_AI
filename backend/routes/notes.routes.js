@@ -1,28 +1,30 @@
 import { Router } from "express";
-import * as fileController from "../controllers/files.controller.js";
+import * as notesController from "../controllers/notes.controller.js";
 import { body } from "express-validator";
 import * as authMiddleWare from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.post("/create-file", authMiddleWare.authUser, fileController.createFileController);
-
-router.post(
-  "/get-file",
-  authMiddleWare.authUser,
-  body("projectId").isString().withMessage("Project ID is required"),
-  fileController.getFileByIdController
-);
-
-router.put("/update-file", 
+router.post("/create-note",
     authMiddleWare.authUser,
     body("projectId").isString().withMessage("Project ID is required"),
-    body("fileTree").isObject().withMessage("File tree is required"),
-    fileController.updateFileController);
+    notesController.createNoteController);
 
-router.post("/delete-files", 
+router.post(
+  "/get-note",
+  authMiddleWare.authUser,
+  body("projectId").isString().withMessage("Project ID is required"),
+  notesController.getNoteController
+);
+
+router.put("/update-note", 
+    authMiddleWare.authUser,
+    body("projectId").isString().withMessage("Project ID is required"),
+    notesController.updateNoteController);
+
+router.post("/delete-note", 
     authMiddleWare.authUser,
     body("projectId").isString().withMessage("Project ID is not given"),
-    fileController.deleteFileController);
+    notesController.deleteNoteController);
 
 export default router;
