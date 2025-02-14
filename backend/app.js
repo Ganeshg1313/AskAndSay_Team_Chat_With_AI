@@ -13,19 +13,7 @@ import cors from "cors";
 const app = express();
 
 app.use(morgan("dev")); //The 'dev' argument specifies the logging format. In the 'dev' format, logs appear in a concise, colorful format.
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
-      if (origin.indexOf("ask-and-say.vercel.app") !== -1) {
-        return callback(null, true);
-      }
-      return callback(new Error("Not allowed by CORS"), false);
-    },
-    credentials: true,
-  })
-);
+app.use(cors("*"));
 
 
 app.use(express.json()); //The JSON data is converted into a JavaScript object and attached to req.body
