@@ -13,6 +13,19 @@ import cors from "cors";
 const app = express();
 
 app.use(morgan("dev")); //The 'dev' argument specifies the logging format. In the 'dev' format, logs appear in a concise, colorful format.
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      if (origin.indexOf("ask-and-say.vercel.app") !== -1) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"), false);
+    },
+    credentials: true,
+  })
+);
 
 
 app.use(express.json()); //The JSON data is converted into a JavaScript object and attached to req.body
@@ -30,15 +43,6 @@ app.get("/", (req, res) => res.status(200).send("Welcome to the API"));
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://ask-and-say.vercel.app");
-  res.header(
-    "Access-Control-Allow-Headers",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  );
-  if (req.method === "OPTIONS") {
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-    return res.status(200).json({});
-  }
   console.error(err.stack);
   res
     .status(err.status || 500)
