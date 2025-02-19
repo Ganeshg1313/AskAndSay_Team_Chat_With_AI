@@ -24,7 +24,7 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post("https://ask-and-say-team-chat-with-ai-api.vercel.app/users/login", { email, password });
+      const res = await axios.post("users/login", { email, password });
       localStorage.setItem("token", res.data.token);
       setUser(res.data.user);
       navigate("/");
