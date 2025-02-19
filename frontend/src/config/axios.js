@@ -7,6 +7,7 @@ const axiosInstance = axios.create({
   headers: {
     Authorization: `Bearer ${localStorage.getItem("token")}`,
   },
+  withCredentials: true, // Ensure credentials (cookies, auth headers) are sent
 });
 
 export default axiosInstance;
