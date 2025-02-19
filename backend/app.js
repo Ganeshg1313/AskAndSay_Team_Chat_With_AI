@@ -13,7 +13,7 @@ import cors from "cors";
 const app = express();
 
 app.use(morgan("dev")); //The 'dev' argument specifies the logging format. In the 'dev' format, logs appear in a concise, colorful format.
-app.use(cors('*'));
+app.use(cors({ origin: "*" })); // Allow all origins
 
 
 app.use(express.json()); //The JSON data is converted into a JavaScript object and attached to req.body
@@ -32,9 +32,7 @@ app.get("/", (req, res) => res.status(200).send("Welcome to the API"));
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res
-    .status(err.status || 500)
-    .json({ message: err.message || "Internal Server Error" });
+  res.status(err.status || 500).json({ message: err.message || "Internal Server Error" });
 });
 
 export default app;
