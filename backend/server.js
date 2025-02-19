@@ -21,7 +21,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "https://ask-and-say.vercel.app", // Replace with your frontend URL
+    origin: "https://ask-and-79pwd94xm-ganesh-vaman-ghodkes-projects.vercel.app", // Replace with your frontend URL
     methods: ["GET", "POST"],
     credentials: true,
   },

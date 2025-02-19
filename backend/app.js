@@ -14,7 +14,7 @@ const app = express();
 
 app.use(morgan("dev")); //The 'dev' argument specifies the logging format. In the 'dev' format, logs appear in a concise, colorful format.
 app.use(cors({
-  origin: "https://ask-and-say.vercel.app", // Replace with your actual frontend domain
+  origin: "https://ask-and-79pwd94xm-ganesh-vaman-ghodkes-projects.vercel.app", // Replace with your actual frontend domain
   credentials: true, // Allow cookies and authentication headers
 })); // Allow all origins
 
