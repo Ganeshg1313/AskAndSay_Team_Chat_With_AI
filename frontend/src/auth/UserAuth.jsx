@@ -26,11 +26,7 @@ const UserAuth = ({ children }) => {
   }, []);
 
   if (loading) {
-    return( <div className="w-screen min-h-screen bg-purple-950 flex flex-col justify-center items-center text-center">
-        <h2 className="text-orange-500 text-5xl"><i className="ri-loader-2-line"></i></h2>
-        <h1 className="text-white text-3xl">Loading...</h1>
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   return <>{children}</>;

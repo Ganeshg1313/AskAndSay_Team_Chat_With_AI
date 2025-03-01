@@ -31,8 +31,7 @@ export const getAllProjectController = async (req, res) => {
     const loggedInUser = await userModel.findOne({
       email: req.user.email,
     });
-    
-    console.log(loggedInUser)
+
     const allUserProjects = await projectService.getAllProjectByUserId({
       userId: loggedInUser._id,
     });
@@ -47,7 +46,7 @@ export const getAllProjectController = async (req, res) => {
 };
 
 export const addUsersToProjectController = async (req, res) => {
-  const errors = validationResult(req);
+  const errors = validationResult(req.body);
 
   if (!errors.isEmpty()) {
     return res.status(400).json({ errors: errors.array() });
@@ -63,7 +62,7 @@ export const addUsersToProjectController = async (req, res) => {
     const project = await projectService.addUsersToProject({
       projectId,
       users,
-      userId: loggedInUser._id,
+      userId: loggedInUser,
     });
 
     return res.status(200).json({ project });
@@ -106,14 +105,27 @@ export const getProjectByIdController = async (req, res) => {
   }
 };
 
-export const deleteProjectController = async (req, res) => {
+
+export const deleteFileByIdController = async (req, res) => { 
   try {
     const { projectId } = req.body;
+    
+    const result = await projectService.deleteFiles({ projectId });
 
-    const result = await projectService.deleteProject({ projectId });
-
-    res.status(200).json({ message: "Project deleted successfully" });
+    res.status(200).json({ message: "File deleted successfully" });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
-};
+}
+
+export const deleteProjectController = async (req, res) => {
+  try{
+    const { projectId } = req.body;
+    
+    const result = await projectService.deleteProject({ projectId });
+    console.log("Porject : ", result);
+    res.status(200).json({ message: "Project deleted successfully" });
+  }catch(error){
+    res.status(400).json({ error: error.message });
+  }
+}

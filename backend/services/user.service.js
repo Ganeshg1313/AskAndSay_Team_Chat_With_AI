@@ -19,12 +19,8 @@ export const createUser = async ({ email, password }) => {
 };
 
 export const getAllUsers = async ({ userId }) => {
-  try {
-    const users = await User.find({
-      _id: { $ne: userId },
-    });
-    return users;
-  } catch (error) {
-    throw new Error("Error fetching all users");
-  }
+  const users = await User.find({
+    _id: { $ne: userId },
+  });
+  return users;
 };

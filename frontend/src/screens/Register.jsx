@@ -3,28 +3,32 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "../config/axios.js";
 import { UserContext } from "../context/user.context.jsx";
 
-const Register = () => {
+const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
 
   const { setUser } = useContext(UserContext);
 
   const navigate = useNavigate();
 
-  async function submitHandler(e) {
+  function submitHandler(e) {
     e.preventDefault();
-    setError("");
 
-    try {
-      const res = await axios.post("users/register", { email, password });
-      localStorage.setItem("token", res.data.token);
-      setUser(res.data.user);
-      navigate("/");
-    } catch (error) {
-      console.log(error.response?.data);
-      setError(error.response?.data || "Registration failed. Please try again.");
-    }
+    axios
+      .post("users/register", {
+        email,
+        password,
+      })
+      .then((res) => {
+        console.log(res.data);
+
+        localStorage.setItem("token", res.data.token);
+        setUser(res.data.user);
+        navigate("/");
+      })
+      .catch((error) => {
+        console.log(error.response.data);
+      });
   }
 
   return (
@@ -34,7 +38,6 @@ const Register = () => {
       </div>
       <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-full max-w-md">
         <h2 className="text-2xl font-bold text-white mb-6">Register</h2>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
         <form onSubmit={submitHandler}>
           <div className="mb-4">
             <label className="block text-gray-400 mb-2" htmlFor="email">
@@ -45,7 +48,6 @@ const Register = () => {
               id="email"
               className="w-full p-3 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-200"
               placeholder="Enter your email"
-              value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
@@ -58,7 +60,6 @@ const Register = () => {
               id="password"
               className="w-full p-3 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Enter your password"
-              value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
@@ -80,4 +81,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default Login;

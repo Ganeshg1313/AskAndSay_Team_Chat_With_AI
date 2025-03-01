@@ -36,21 +36,22 @@ io.use(async (socket, next) => {
     const projectId = socket.handshake.query?.projectId;
 
     if (!mongoose.Types.ObjectId.isValid(projectId)) {
-      return next(new Error("Invalid projectId"));
+      return next(new Error("Inavlid projectId"));
     }
 
     socket.project = await projectModel.findById(projectId);
 
     if (!token) {
+      return next(new Error("Authenticaiton error"));
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    if (!decoded) {
       return next(new Error("Authentication error"));
     }
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      socket.user = decoded;
-    } catch (err) {
-      return next(new Error("Invalid or expired token"));
-    }
+    socket.user = decoded;
 
     next();
   } catch (error) {
@@ -59,42 +60,32 @@ io.use(async (socket, next) => {
 });
 
 io.on("connection", (socket) => {
-  if (!socket.project) {
-    return socket.disconnect();
-  }
-
   // Attaching a roomId to socket to identify each project uniquely and only send messages to the users of a particular project
   socket.roomId = socket.project._id.toString();
 
-  console.log(`User connected: ${socket.user?.email || "Unknown"}`);
+  console.log("A user connected");
 
   // makes the socket join a "room" identified by roomId
   socket.join(socket.roomId);
 
   socket.on("project-message", async (data) => {
     const message = data.message;
+    
+    const isAIPrompt = message.includes("@ai");
 
-    const isAIPrompt = /@ai\b/.test(message);
+    if(isAIPrompt){
 
-    console.log(isAIPrompt)
+      const prompt = message.replace("@ai", "");
 
-    if (isAIPrompt) {
-      const prompt = message.replace(/@ai\b/g, "").trim();
-      console.log(prompt)
-      try {
-        const result = await generateResult(prompt);
-        console.log(result);
-        io.to(socket.roomId).emit("project-message", {
-          sender: { _id: "ai", email: "AI" },
-          message: result,
-        });
-      } catch (error) {
-        io.to(socket.roomId).emit("project-message", {
-          sender: { _id: "ai", email: "AI" },
-          message: "AI failed to process your request. Try again later.",
-        });
-      }
+      const result = await generateResult(prompt);
 
+      io.to(socket.roomId).emit("project-message", {
+        sender:{
+          _id: 'ai',
+          email: 'AI'
+        },
+        message: result
+      });
       return;
     }
     // to send the message to all sockets in the same roomId, except the sender
@@ -102,7 +93,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    console.log(`User disconnected: ${socket.user?.email || "Unknown"}`);
+    console.log("User disconnected");
     socket.leave(socket.roomId);
   });
 });

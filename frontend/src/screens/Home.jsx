@@ -13,7 +13,6 @@ const Home = () => {
     axios
     .get("/projects/all")
     .then((res) => {
-      console.log(res);
       setProjects(res.data.projects);
     })
     .catch((error) => {
@@ -51,37 +50,10 @@ const Home = () => {
     .catch((error) => {
       console.log(error);
     })
-
-    axios.post("/files/delete-files",{
-      projectId: id,
-    })
-    .then((res) => {
-      console.log(res);
-    })
-    .catch((error) => {
-      console.log(error);
-    })
-
-    axios.post("notes/delete-note",{
-      projectId: id,
-    })
-    .then((res) => {
-      console.log(res)
-    })
-    .catch((error) => {
-      if(error.status == 404){
-        console.log("Note not available")
-      }
-      else{
-        console.log(error.message);
-      }
-    })
   }
   
   useEffect(() => {
-    setTimeout(()=>{
-      getAllProjects();
-    },1000)
+    getAllProjects();
   }, []); // Ensure this only runs once
   
 
