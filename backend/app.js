@@ -1,7 +1,5 @@
-// Role: To apply the middlewares and add routes
-
 import express from "express";
-import morgan from "morgan";              // HTTP request logger
+import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
@@ -13,40 +11,46 @@ import notesRoutes from "./routes/notes.routes.js";
 
 const app = express();
 
-// 1) CORS configuration
-const corsOptions = {
-  origin: "https://ask-and-say.vercel.app",   // your frontend URL
-  credentials: true,                          // allow cookies/auth headers
-  allowedHeaders: ["Content-Type", "Authorization"],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-};
+// Allow your production origin + any preview URLs
+const allowedOrigins = [
+  "https://ask-and-say.vercel.app",
+  // add any .vercel.app preview domains here if needed
+];
 
-// 2) Enable CORS and preflight
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+app.use(
+  cors({
+    origin: (incomingOrigin, cb) => {
+      // allow requests with no origin (mobile apps, curl, etc)
+      if (!incomingOrigin || allowedOrigins.includes(incomingOrigin)) {
+        return cb(null, true);
+      }
+      cb(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  })
+);
+// explicitly handle OPTIONS
+app.options("*", cors());
 
-// 3) Standard middleware
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// 4) Mount routes
+// your routes…
 app.use("/users", userRoutes);
 app.use("/projects", projectRoutes);
 app.use("/ai", aiRoutes);
 app.use("/files", fileRoutes);
 app.use("/notes", notesRoutes);
 
-// 5) Root health check
-app.get("/", (req, res) => res.status(200).send("Welcome to the API"));
+app.get("/", (req, res) => res.send("Welcome to the API"));
 
-// 6) Global error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res
-    .status(err.status || 500)
-    .json({ message: err.message || "Internal Server Error" });
+  res.status(err.status || 500).json({ message: err.message });
 });
 
 export default app;
