@@ -47,6 +47,7 @@ await client.set('foo', 'bar');
 const result = await client.get('foo');
 console.log(result)  // >>> bar
 
+export default client;
 
 // import { Redis } from 'ioredis';
 
