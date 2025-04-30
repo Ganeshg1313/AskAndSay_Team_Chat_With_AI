@@ -30,7 +30,7 @@
 
 import { Redis } from "ioredis";
 
-const redisClient = new Redis('redis://default:kOpd5QghcVgEp5TP4h3ioe3YilUVzmZO@memcached-15060.c80.us-east-1-2.ec2.redns.redis-cloud.com:15060');
+const redisClient = new Redis('redis://:kOpd5QghcVgEp5TP4h3ioe3YilUVzmZO@memcached-15060.c80.us-east-1-2.ec2.redns.redis-cloud.com:15060/13136753');
 
 redisClient.on("connect", () => {
   console.log("Redis connected");
