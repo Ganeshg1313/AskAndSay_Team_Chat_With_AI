@@ -745,6 +745,7 @@ const Project = () => {
               </div>
               <iframe
                 src={iFrameUrl}
+                allow="cross-origin-isolated"
                 title="Web Container"
                 className="w-full h-full bg-slate-100"
               ></iframe>
