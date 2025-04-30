@@ -5,10 +5,12 @@ import { Redis } from "ioredis";
  
 //  const redisClient = new Redis(process.env.REDIS_HOST);
  const redisClient = new Redis('redis://default:NqvRujwLj6btPltRH9VvwR5xQBrnerou@redis-18123.c274.us-east-1-3.ec2.redns.redis-cloud.com:18123');
- 
- redisClient.on("connect", () => {
-   console.log("Redis connected");
-   redisClient.on("error", (error) => {
- });
+
+ redisClient.on("connect",() =>{
+    console.log("Redis connected");
+    redisClient.on("error", (error) => {
+        console.log("Error while connecting to redis: " + error)
+    })
+ })
  
  export default redisClient;
