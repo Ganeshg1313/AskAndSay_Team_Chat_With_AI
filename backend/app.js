@@ -3,13 +3,13 @@ import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-import userRoutes from "./routes/user.routes.js";
-import projectRoutes from "./routes/project.routes.js";
-import aiRoutes from "./routes/ai.routes.js";
-import fileRoutes from "./routes/files.routes.js";
-import notesRoutes from "./routes/notes.routes.js";
-
 const app = express();
+
+app.use(morgan("dev"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
 
 // CORS: allow your frontend URL + socket origin
 // Only allow your deployed frontend origin
@@ -21,10 +21,27 @@ app.use(cors({
   allowedHeaders: ["Content-Type","Authorization"],
   credentials: true            // enable Access-Control-Allow-Credentials
 }));
-app.use(morgan("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+
+// Enable cross-origin isolation headers
+app.use((req, res, next) => {
+  // Must be SAME-ORIGIN for opener policy
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  // Must be REQUIRE-CORP for embedder policy
+  res.setHeader("Cross-Origin-Embedder-Policy", "require-corp");
+  next();
+});
+
+// CORP on every response so your worker scripts (“.js” bundles) can load
+app.use((req, res, next) => {
+  res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
+  next();
+});
+
+import userRoutes from "./routes/user.routes.js";
+import projectRoutes from "./routes/project.routes.js";
+import aiRoutes from "./routes/ai.routes.js";
+import fileRoutes from "./routes/files.routes.js";
+import notesRoutes from "./routes/notes.routes.js";
 
 // attach your routers
 app.use("/users", userRoutes);
