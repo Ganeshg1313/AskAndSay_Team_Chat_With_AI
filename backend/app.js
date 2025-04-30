@@ -12,13 +12,15 @@ import notesRoutes from "./routes/notes.routes.js";
 const app = express();
 
 // CORS: allow your frontend URL + socket origin
+// Only allow your deployed frontend origin
+const FRONTEND_URL = process.env.FRONTEND_URL; // e.g. "https://ask-and-say.vercel.app"
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL,  // exact domain, not '*'
-  credentials: true,                 // <— allows Set-Cookie or Authorization
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization']
+  origin: FRONTEND_URL,        // echo this exact origin
+  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
+  allowedHeaders: ["Content-Type","Authorization"],
+  credentials: true            // enable Access-Control-Allow-Credentials
 }));
-app.options('*', cors());
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
