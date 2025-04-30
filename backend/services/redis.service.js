@@ -28,18 +28,25 @@
 
 
 
-import { Redis } from "ioredis";
+import { createClient } from 'redis';
 
-const redisClient = new Redis('redis://:@memcached-15060.c80.us-east-1-2.ec2.redns.redis-cloud.com:15060/13136753');
-
-redisClient.on("connect", () => {
-  console.log("Redis connected");
+const client = createClient({
+    username: 'default',
+    password: 'kOpd5QghcVgEp5TP4h3ioe3YilUVzmZO',
+    socket: {
+        host: 'memcached-15060.c80.us-east-1-2.ec2.redns.redis-cloud.com',
+        port: 15060
+    }
 });
-redisClient.on("error", (error) => {
-  console.log(error);
-});
 
-export default redisClient;
+client.on('error', err => console.log('Redis Client Error', err));
+
+await client.connect();
+
+await client.set('foo', 'bar');
+const result = await client.get('foo');
+console.log(result)  // >>> bar
+
 
 // import { Redis } from 'ioredis';
 
