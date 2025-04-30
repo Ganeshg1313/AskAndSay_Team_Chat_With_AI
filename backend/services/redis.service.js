@@ -30,7 +30,7 @@
 
 import { createClient } from 'redis';
 
-const client = createClient({
+const redisClient = createClient({
     username: 'default',
     password: 'kOpd5QghcVgEp5TP4h3ioe3YilUVzmZO',
     socket: {
@@ -39,15 +39,21 @@ const client = createClient({
     }
 });
 
-client.on('error', err => console.log('Redis Client Error', err));
+redisClient.on('error', err => console.log('Redis Client Error', err));
 
-await client.connect();
+async function connectRedis() {
+    try {
+        await redisClient.connect();
+        console.log('Redis client connected successfully');
+    } catch (error) {
+        console.error('Error connecting to Redis:', error);
+        // Handle the error appropriately, maybe retry or exit the application
+    }
+}
 
-await client.set('foo', 'bar');
-const result = await client.get('foo');
-console.log(result)  // >>> bar
+connectRedis(); // Initiate the connection
 
-export default client;
+export default redisClient;
 
 // import { Redis } from 'ioredis';
 
