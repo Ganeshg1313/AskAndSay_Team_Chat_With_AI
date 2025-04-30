@@ -12,12 +12,13 @@ import notesRoutes from "./routes/notes.routes.js";
 const app = express();
 
 // CORS: allow your frontend URL + socket origin
-const FRONTEND = process.env.FRONTEND_URL;
 app.use(cors({
-  origin:  [FRONTEND, /* allow sentinel for socket.io if needed */],
-  credentials: true
+  origin: process.env.FRONTEND_URL,  // exact domain, not '*'
+  credentials: true,                 // <— allows Set-Cookie or Authorization
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization']
 }));
-
+app.options('*', cors());
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
