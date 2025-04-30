@@ -1,26 +1,14 @@
 // Role: creating an axios instance to be used across project 
 
 // axiosInstance.js
+// src/config/axios.js
 import axios from "axios";
-
-const axiosInstance = axios.create({
+const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
-  withCredentials: false, // you’re using Bearer tokens, not cookies
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
-
-// inject the latest token into every request
-axiosInstance.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (err) => Promise.reject(err)
-);
-
-export default axiosInstance;
+api.interceptors.request.use(cfg => {
+  const t = localStorage.getItem("token");
+  if (t) cfg.headers.Authorization = `Bearer ${t}`;
+  return cfg;
+});
+export default api;
