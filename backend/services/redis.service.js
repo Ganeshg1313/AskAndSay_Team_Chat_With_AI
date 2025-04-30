@@ -31,12 +31,7 @@
 import { createClient } from 'redis';
 
 const redisClient = createClient({
-    username: 'default',
-    password: 'kOpd5QghcVgEp5TP4h3ioe3YilUVzmZO',
-    socket: {
-        host: 'memcached-15060.c80.us-east-1-2.ec2.redns.redis-cloud.com',
-        port: 15060
-    }
+    url: 'redis://default:kOpd5QghcVgEp5TP4h3ioe3YilUVzmZO@memcached-15060.c80.us-east-1-2.ec2.redns.redis-cloud.com:15060'
 });
 
 redisClient.on('error', err => console.log('Redis Client Error', err));
@@ -47,11 +42,10 @@ async function connectRedis() {
         console.log('Redis client connected successfully');
     } catch (error) {
         console.error('Error connecting to Redis:', error);
-        // Handle the error appropriately, maybe retry or exit the application
     }
 }
 
-connectRedis(); // Initiate the connection
+connectRedis();
 
 export default redisClient;
 
