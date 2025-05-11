@@ -1,43 +1,59 @@
-//Role: Create Schema and define methods
+// Role: Define the User schema, handling authentication data and related methods
 
 import mongoose from "mongoose";
-import bcrypt from "bcrypt"; // bcrypt library for hashing and verifying passwords.
-import jwt from "jsonwebtoken"; // jsonwebtoken library for creating and verifying JSON Web Tokens (JWT).
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 const userSchema = new mongoose.Schema({
+  // Unique, validated email address used as username
   email: {
     type: String,
     required: true,
     unique: [true, "Email has been used before"],
     trim: true,
     lowercase: true,
-    minLength: [6, "Email must be at least 6 characters long"], //Set length constraints and custom error messages.
+    minLength: [6, "Email must be at least 6 characters long"],
     maxLength: [50, "Email must not be longer than 50 characters"],
   },
+  // Hashed password, excluded by default from query results
   password: {
     type: String,
-    select: false, //Excludes the password field from query results by default, enhancing security.
+    required: true,
+    select: false,
   },
+}, {
+  timestamps: true, // Automatically manage createdAt and updatedAt fields
 });
 
-//Static methods are called directly on the model
-userSchema.statics.hashPassword = async function (password) {
-  return await bcrypt.hash(password, 10);
+/**
+ * Hashes a plaintext password using bcrypt.
+ * @param {string} plaintext - The user's password to hash.
+ * @returns {Promise<string>} - The hashed password.
+ */
+userSchema.statics.hashPassword = (plaintext) => {
+  return bcrypt.hash(plaintext, 10);
 };
 
-//Define an instance method isValidPassword for the schema.
-userSchema.methods.isValidPassword = async function (password) {
-  return await bcrypt.compare(password, this.password);
+/**
+ * Compares a candidate password against the stored hash.
+ * @param {string} candidate - The plaintext password to verify.
+ * @returns {Promise<boolean>} - True if the passwords match.
+ */
+userSchema.methods.isValidPassword = function (candidate) {
+  return bcrypt.compare(candidate, this.password);
 };
 
-//Define an instance method generateJWT for the schema.
-userSchema.methods.generateJWT = async function () {
-  return jwt.sign({ email: this.email }, process.env.JWT_SECRET, {
-    expiresIn: "24h",
-  });
+/**
+ * Generates a signed JWT for the user.
+ * @returns {string} - Signed JSON Web Token containing the user's email.
+ */
+userSchema.methods.generateJWT = function () {
+  return jwt.sign(
+    { email: this.email },
+    process.env.JWT_SECRET,
+    { expiresIn: "24h" }
+  );
 };
 
-//Create a model named User using the userSchema.
-const User = mongoose.model("user", userSchema);
-
-export default User;
+// Export the User model based on userSchema
+export default mongoose.model("user", userSchema);

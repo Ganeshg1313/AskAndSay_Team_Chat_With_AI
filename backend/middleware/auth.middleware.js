@@ -1,37 +1,38 @@
-//Role: To authenticate user
+// Role: Authenticate incoming requests by validating JWT and checking logout blacklist
 
 import jwt from "jsonwebtoken";
 import redisClient from "../services/redis.service.js";
 
 export const authUser = async (req, res, next) => {
   try {
-    // Extracting the Token
-    const token = req.cookies.token || req.headers.authorization.split(" ")[1];
+    // 1. Extract JWT from cookie or Authorization header
+    const token =
+      req.cookies.token ||
+      (req.headers.authorization && req.headers.authorization.split(" ")[1]);
 
-    // Checking If Token Exists
     if (!token) {
-      return res.status(401).send({ error: "Unauthorized User" });
+      // No token provided
+      return res.status(401).json({ error: "Unauthorized User" });
     }
 
-    // Find if the token is present in redis
+    // 2. Check if token has been invalidated (user logged out)
     const isBlackListed = await redisClient.get(token);
-
-    // If True: user has logged out
     if (isBlackListed) {
-      // By setting the cookie’s value to an empty string (''), the token becomes invalid for further use.
-      res.cookie("token", "");
-      return res.status(401).send({ error: "Unauthorized User" });
+      // Clear cookie to prevent further reuse
+      res.cookie("token", "", { httpOnly: true });
+      return res.status(401).json({ error: "Unauthorized User" });
     }
 
-    // Verifying the Token
+    // 3. Verify token signature and expiration
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Adding the Decoded User Information to the Request
+    // 4. Attach decoded payload (e.g., user email) to request for downstream handlers
     req.user = decoded;
 
-    // Passing Control to the Next Middleware or Route Handler
+    // 5. Proceed to next middleware or route handler
     next();
-  } catch (error) {
-    res.status(401).send({ error: "Unauthorized User " });
+  } catch (err) {
+    // Any error implies invalid or expired token
+    return res.status(401).json({ error: "Unauthorized User" });
   }
 };

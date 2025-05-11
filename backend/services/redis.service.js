@@ -1,16 +1,19 @@
-// Role: Connect to redis database (cache storage)
+// Role: Connect to Redis database (cache storage)
 
 import { Redis } from "ioredis";
- import "dotenv/config";
- 
-//  const redisClient = new Redis(process.env.REDIS_HOST);
- const redisClient = new Redis('redis://default:NqvRujwLj6btPltRH9VvwR5xQBrnerou@redis-18123.c274.us-east-1-3.ec2.redns.redis-cloud.com:18123');
+import "dotenv/config";
 
- redisClient.on("connect",() =>{
-    console.log("Redis connected");
-    redisClient.on("error", (error) => {
-        console.log("Error while connecting to redis: " + error)
-    })
- })
- 
- export default redisClient;
+// Initialize Redis client
+const redisClient = new Redis(process.env.REDIS_HOST);
+
+// Handle successful connection
+redisClient.on("connect", () => {
+  console.log("Redis connected");
+});
+
+// Handle connection errors
+redisClient.on("error", (error) => {
+  console.error("Error while connecting to Redis:", error);
+});
+
+export default redisClient;
