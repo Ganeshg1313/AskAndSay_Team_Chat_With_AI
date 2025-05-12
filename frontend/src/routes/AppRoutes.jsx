@@ -15,6 +15,7 @@ const AppRoutes = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />}/>
             <Route path="/project" element={<UserAuth> <Project /> </UserAuth>}/>
+            <Route path="*" element={<div className="text-center text-white">404 - Page Not Found</div>} />
         </Routes>
       </BrowserRouter>
     </div>

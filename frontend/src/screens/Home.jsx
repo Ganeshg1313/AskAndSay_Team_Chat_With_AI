@@ -5,85 +5,56 @@ import { useNavigate } from "react-router-dom";
 const Home = () => {
   const navigate = useNavigate();
 
-  const [isModalOpan, setIsModelOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [projectName, setProjectName] = useState("");
   const [projects, setProjects] = useState([]);
 
-  function getAllProjects(){
+  const getAllProjects = () => {
     axios
-    .get("/projects/all")
-    .then((res) => {
-      console.log(res);
-      setProjects(res.data.projects);
-    })
-    .catch((error) => {
-      console.log(error);
-    });
-  }
-
-  function createProject(e) {
-    e.preventDefault();
-  
-    axios
-      .post("/projects/create", {
-        name: projectName,
-      })
+      .get("/projects/all")
       .then((res) => {
-        getAllProjects();
-        setIsModelOpen(false);
+        setProjects(res.data.projects);
       })
       .catch((error) => {
-        console.log(error);
+        console.error("Error fetching projects:", error);
       });
+  };
 
-  }
+  const createProject = (e) => {
+    e.preventDefault();
 
-  function handleDeleteProject(event, id){
+    axios
+      .post("/projects/create", { name: projectName })
+      .then((res) => {
+        setProjectName("");
+        setIsModalOpen(false);
+        getAllProjects();
+      })
+      .catch((error) => {
+        console.error("Error creating project:", error);
+      });
+  };
 
+  const handleDeleteProject = async (event, id) => {
     event.stopPropagation();
-  
-    axios.put("/projects/delete-project",{
-      projectId: id,
-    })
-    .then((res) => {
+
+    try {
+      await axios.put("/projects/delete-project", { projectId: id });
+      await axios.post("/files/delete-files", { projectId: id });
+      await axios.post("/notes/delete-note", { projectId: id });
       getAllProjects();
-    })
-    .catch((error) => {
-      console.log(error);
-    })
-
-    axios.post("/files/delete-files",{
-      projectId: id,
-    })
-    .then((res) => {
-      console.log(res);
-    })
-    .catch((error) => {
-      console.log(error);
-    })
-
-    axios.post("notes/delete-note",{
-      projectId: id,
-    })
-    .then((res) => {
-      console.log(res)
-    })
-    .catch((error) => {
-      if(error.status == 404){
-        console.log("Note not available")
+    } catch (error) {
+      if (error?.response?.status === 404) {
+        console.log("Note not available");
+      } else {
+        console.error("Error deleting project and files:", error);
       }
-      else{
-        console.log(error.message);
-      }
-    })
-  }
-  
+    }
+  };
+
   useEffect(() => {
-    setTimeout(()=>{
-      getAllProjects();
-    },1000)
-  }, []); // Ensure this only runs once
-  
+    getAllProjects();
+  }, []);
 
   return (
     <main className="w-full h-screen min-h-min bg-slate-900">
@@ -92,60 +63,67 @@ const Home = () => {
           <img src="/logo.png" alt="logo" className="w-11" />
         </div>
         <div className="tab">
-          <a href="/about" className="text-white font-semibold hover:underline">
+          <span
+            onClick={() => navigate("/about")}
+            className="text-white font-semibold hover:underline cursor-pointer"
+          >
             About
-          </a>
+          </span>
         </div>
         <div className="logout">
-         <button
+          <button
             className="text-white bg-purple-600 p-2 px-4 rounded-md font-bold hover:bg-purple-800"
             onClick={() => {
               localStorage.removeItem("token");
               navigate("/login");
-            }
-            }>
+            }}
+          >
             Logout
-         </button>
+          </button>
         </div>
       </div>
+
       <div className="projects flex flex-col items-center flex-wrap gap-3 pb-6">
-      <div className="create-project w-1/2">
+        <div className="create-project w-1/2">
           <button
             className="project p-4 bg-orange-600 text-white font-semibold rounded-md hover:shadow-sm hover:shadow-zinc-200"
-            onClick={() => setIsModelOpen(true)}
+            onClick={() => setIsModalOpen(true)}
           >
             New Project
             <i className="ri-link ml-2"></i>
           </button>
         </div>
-        {projects.map((project) => (
-          <div
-            key={project._id}
-            onClick={() =>
-              navigate(`/project/`, {
-                state: { project },
-              })
-            }
-            className="project w-1/2 bg-slate-200 flex justify-between p-4 px-6 mx-4 border rounded-md border-slate-300 cursor-pointer hover:bg-purple-400"
-          >
-            <h2 className="font-semibold text-lg">{project.name}</h2>
 
-            <div className="flex gap-2 items-center">
-              <i className="ri-user-line"></i>
-              <p className="text-md font-semibold">Collaboraters: </p>
-              <p className="text-sm font-bold">{project.users.length}</p>
-            </div>
-
-            <button
-            onClick={(e) => handleDeleteProject(e, project._id)}
+        {projects.length === 0 ? (
+          <div className="text-white mt-6">No projects found.</div>
+        ) : (
+          projects.map((project) => (
+            <div
+              key={project._id}
+              onClick={() =>
+                navigate(`/project/`, {
+                  state: { project },
+                })
+              }
+              className="project w-1/2 bg-slate-200 flex justify-between p-4 px-6 mx-4 border rounded-md border-slate-300 cursor-pointer hover:bg-purple-400"
             >
-            <i className="ri-delete-bin-6-fill"></i>
-            </button>
-          </div>
-        ))}
+              <h2 className="font-semibold text-lg">{project.name}</h2>
+
+              <div className="flex gap-2 items-center">
+                <i className="ri-user-line"></i>
+                <p className="text-md font-semibold">Collaborators:</p>
+                <p className="text-sm font-bold">{project.users.length}</p>
+              </div>
+
+              <button onClick={(e) => handleDeleteProject(e, project._id)}>
+                <i className="ri-delete-bin-6-fill"></i>
+              </button>
+            </div>
+          ))
+        )}
       </div>
 
-      {isModalOpan && (
+      {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-slate-50 p-6 rounded-md shadow-md w-1/3">
             <h2 className="text-xl mb-4">Create New Project</h2>
@@ -160,15 +138,13 @@ const Home = () => {
                   onChange={(e) => setProjectName(e.target.value)}
                   value={projectName}
                   required
-                ></input>
+                />
               </div>
               <div className="flex justify-end">
                 <button
                   type="button"
                   className="mr-2 px-4 py-2 bg-gray-300 rounded-md hover:bg-gray-400"
-                  onClick={() => {
-                    setIsModelOpen(false)
-                  }}
+                  onClick={() => setIsModalOpen(false)}
                 >
                   Cancel
                 </button>
