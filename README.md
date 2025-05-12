@@ -38,13 +38,14 @@
 
 ---
 
-## Live Demo
+## Live Demo (1st Login/Register request may take some time to respond because backend can be in Sleep Mode)
 
 > **Frontend:** https://ask-and-say.vercel.app  
 >
 > **Backend:** https://askandsay-team-chat-with-ai.onrender.com  
 
 ---
+
 
 ## Prerequisites
 
