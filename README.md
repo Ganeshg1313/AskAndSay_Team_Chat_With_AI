@@ -34,7 +34,6 @@
 - **Backend:** Node.js, Express, Socket.IO, MongoDB (Mongoose), Redis (ioredis)  
 - **AI Service:** Google Generative AI (Gemini)  
 - **Deployment:** Vercel (frontend), Render (backend)  
-- **CI/CD & DevOps:** GitHub Actions, Docker (optional)  
 
 ---
 
